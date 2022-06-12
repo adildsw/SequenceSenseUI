@@ -1,0 +1,26 @@
+.scrollable-div {
+    display: flex;
+    position: relative;
+    flex-direction: column; 
+    height: 100%;
+}
+
+.scrollable-section {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.full-width-upload > div.ant-upload {
+    width: 100%;
+}
+
+.full-height-card-body > div.ant-card-body {
+    height: 100%;
+}
+
+body {
+    max-height: 100vh;
+    height: 100vh;
+    overflow-y: hidden;
+}

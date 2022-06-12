@@ -1,0 +1,41 @@
+export const gestureList = [
+    'Jump',
+    'Run in place',
+    'A step to the side',
+    'A step to the side (left)',
+    'Turn left',
+    'Turn right',
+    'A step forward',
+    'A step backward',
+    'Walk in place',
+    'Draw a circle',
+    'Drag from front to back',
+    'Rotate toes left',
+    'Rotate toes right',
+    'Drag from left to right',
+    'Drag from right to left',
+    'Double foot tap',
+    'Foot tap to the right',
+    'Foot tap to the left'
+];
+
+export const gestureMapping = {
+    'Jump' : 1, 
+    'Run in place' : 2,
+    'A step to the side' : 3,
+    'A step to the side (left)' : 21,
+    'Turn left' : 4,
+    'Turn right' : 5,
+    'A step forward' : 6, 
+    'A step backward' : 7,
+    'Walk in place' : 8,
+    'Draw a circle' : 9,
+    'Drag from front to back' : 10, 
+    "Rotate toes left" : 11,
+    "Rotate toes right" : 12,
+    "Drag from left to right" : 13, 
+    "Drag from right to left" : 14,
+    "Double foot tap" : 15,
+    "Foot tap to the right" : 16,
+    "Foot tap to the left" : 17
+};
