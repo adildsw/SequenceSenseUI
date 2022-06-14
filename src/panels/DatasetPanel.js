@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Typography, Space, Card, Segmented, AutoComplete, Button, Empty, Upload, Tree, message, Popconfirm } from 'antd';
-import { CopyOutlined, FileOutlined, UploadOutlined, InfoCircleOutlined, DownOutlined, SettingFilled, DeleteOutlined } from '@ant-design/icons';
+import { CopyOutlined, FileOutlined, UploadOutlined, InfoCircleOutlined, DownOutlined, SettingFilled, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 
 import { getAntdSegmentedItem, getAntdSelectItem } from '../utils/AntdUtils';
 
@@ -8,11 +8,9 @@ import { gestureList } from '../utils/GestureUtils';
 
 const { Title, Text } = Typography;
 
-const SERVER_ADDRESS = 'http://192.168.1.178:3001';
-
 const DatasetPanel = (props) => {
 
-    const { gestureData, setGestureData, setClassifierData } = props;
+    const { gestureData, setGestureData, setClassifierData, setSelectedClassification, isFetchingClassificationResult, setIsFetchingClassificationResult, serverAddress } = props;
 
     const [uploadType, setUploadType] = useState('single');
     const [uploadGesture, setUploadGesture] = useState('');
@@ -37,8 +35,8 @@ const DatasetPanel = (props) => {
     }, []);
 
     const uploadOptions = [
-        getAntdSegmentedItem(uploadType === 'single' ? ' Single Sample' : '', 'single', <FileOutlined />),
-        getAntdSegmentedItem(uploadType === 'multiple' ? ' Multi-Sample' : '', 'multiple', <CopyOutlined rotate={180} />)
+        getAntdSegmentedItem(uploadType === 'single' ? ' Single' : '', 'single', <FileOutlined />),
+        getAntdSegmentedItem(uploadType === 'multiple' ? ' Multiple' : '', 'multiple', <CopyOutlined rotate={180} />)
     ];
 
     const gestureSelectOptions = gestureList.map(gesture => getAntdSelectItem(gesture, gesture));
@@ -72,12 +70,10 @@ const DatasetPanel = (props) => {
     const deleteGesture = (toDelete, type) => {
         const newGestureData = {...gestureData};
         newGestureData.processed = false;
-        console.log(newGestureData);
         if (type === 'sample') {
             delete newGestureData.data[toDelete];
             var gestureToDelete = '';
             for (var gesture of Object.keys(newGestureData.files)) {
-                console.log(Object.keys(newGestureData.files));
                 newGestureData.files[gesture] = newGestureData.files[gesture].filter(file => file !== toDelete);
                 if (newGestureData.files[gesture].length === 0) {
                     gestureToDelete = gesture;
@@ -98,6 +94,8 @@ const DatasetPanel = (props) => {
     }
 
     const processGesture = () => {
+        setIsFetchingClassificationResult(true);
+        setSelectedClassification({ actualIdx: -1, predictedIdx: -1, predicted: {}, actual: {} });
         initiateProcessing();
     }
 
@@ -107,7 +105,7 @@ const DatasetPanel = (props) => {
             header: { 'Content-Type': 'application/json' },
             body: JSON.stringify(gestureData)
         };
-        fetch(SERVER_ADDRESS + '/classify', requestOptions)
+        fetch(serverAddress + '/classify', requestOptions)
             .then(response => {
                 if (!response.ok) {
                     throw Error(response.statusText);
@@ -115,7 +113,6 @@ const DatasetPanel = (props) => {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
                 setGestureData(prevState => {
                     return {...prevState, 'processed': true};
                 });
@@ -126,11 +123,13 @@ const DatasetPanel = (props) => {
                     message.warning('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
                 else
                     message.error('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
+                setIsFetchingClassificationResult(false);
             }, error => {
                 console.log(error);
                 setGestureData(prevState => {
                     return {...prevState, 'processed': false};
                 });
+                setIsFetchingClassificationResult(false);
             });
     }
 
@@ -203,7 +202,7 @@ const DatasetPanel = (props) => {
                             type={uploadGesture.length === 0 && uploadType === 'single' ? 'dashed' : 'default'}
                             ghost={uploadGesture.length === 0 && uploadType === 'single'}
                             icon={<UploadOutlined />}
-                            disabled={uploadGesture.length === 0 && uploadType === 'single'}>
+                            disabled={(uploadGesture.length === 0 && uploadType === 'single') || isFetchingClassificationResult}>
                             {uploadType === 'single' ? 'Upload Sample' : 'Upload Samples'}
                         </Button>
                     </Upload>
@@ -233,11 +232,11 @@ const DatasetPanel = (props) => {
                                 switcherIcon={<DownOutlined />}
                                 treeData={generateTree()}
                                 onRightClick={(e) => {
+                                    if (isFetchingClassificationResult) return;
                                     var deleteType = 'sample';
                                     if (e.node.children !== undefined) {
                                         deleteType = 'gesture';
                                     }
-                                    console.log(e.node);
                                     setGestureDeleteProps({
                                         ...gestureDeleteProps, 
                                         'visible': true, 
@@ -249,6 +248,7 @@ const DatasetPanel = (props) => {
                                     
                                 }}
                                 onClick={() => {
+                                    if (isFetchingClassificationResult) return;
                                     message.destroy();
                                     message.warning('Press right click to remove the gesture sample.');
                                 }}
@@ -280,10 +280,10 @@ const DatasetPanel = (props) => {
                 type={Object.keys(gestureData.data).length === 0 ? 'dashed' : 'primary'}
                 ghost={Object.keys(gestureData.data).length === 0}
                 block 
-                icon={<SettingFilled />}
-                disabled={Object.keys(gestureData.data).length === 0}
+                icon={ gestureData.processed ? <CheckOutlined /> : isFetchingClassificationResult ? <SettingFilled spin /> : <SettingFilled />}
+                disabled={Object.keys(gestureData.data).length === 0 || gestureData.processed || isFetchingClassificationResult}
                 onClick={() => { processGesture(); }}>
-                Process Samples
+                { gestureData.processed ? 'Samples Classified' : isFetchingClassificationResult ? 'Classifying...' : 'Classify Samples' }
             </Button>
         </div>
     );

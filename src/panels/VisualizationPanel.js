@@ -1,8 +1,9 @@
 import { Button, Card, Image, Select, Space, Steps, Typography, Tooltip, Modal, Row, Col } from "antd";
-
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, Label } from "recharts";
+import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, Label } from "recharts";
 
 import { getAntdSelectItem } from "../utils/AntdUtils";
+
+import { generateYAxisLabel, getChartLines, visToChartType } from "../utils/ChartUtils";
 
 import banner from '../assets/sequence-sense-banner.svg';
 import axisReference from '../assets/axis-ref.png';
@@ -12,11 +13,9 @@ import { AppstoreOutlined, InfoCircleFilled, LineChartOutlined } from "@ant-desi
 const { Title, Text } = Typography;
 const { Step } = Steps;
 
-const tickCount = 7;
-
 const VisualizePanel = (props) => {
 
-    const { gestureData, classifierData } = props;
+    const { gestureData, classifierData, isChartIsolated, setIsChartIsolated, setIsolatedChartResizeFunc, setMergedChartResizeFunc } = props;
     const chartData = classifierData.chartData.concat;
 
     const [gestureSelect, setGestureSelect] = useState('');
@@ -29,47 +28,43 @@ const VisualizePanel = (props) => {
 
     const isolatedChartAreaRef = useCallback(node => {
         if (node !== null) {
-            setIsolatedChartDim([node.clientWidth, node.clientHeight]);
-            window.onresize = () => {
-                console.log(node.height);
+            const resizeFunc = () => {
                 if (node) {
-                    console.log(node.clientWidth, node.clientHeight);
                     setIsolatedChartDim([node.clientWidth, node.clientHeight]);
                 }
-            };
+            }
+            setIsolatedChartDim([node.clientWidth, node.clientHeight]);
+            setIsolatedChartResizeFunc(prevState => {
+                window.removeEventListener('resize', prevState);
+                window.addEventListener('resize', resizeFunc);
+                return resizeFunc;
+            });
         }
-    }, []);
+    }, [setIsolatedChartResizeFunc]);
+
     const mergedChartAreaRef = useCallback(node => {
         if (node !== null) {
-            setMergedChartDim([node.offsetWidth, node.offsetHeight]);
-            window.onresize = () => {
+            const resizeFunc = () => {
                 if (node) {
-                    setMergedChartDim([node.offsetWidth, node.offsetHeight]);
+                    setMergedChartDim([node.clientWidth, node.clientHeight]);
                 }
-            };
+            }
+            setMergedChartDim([node.clientWidth, node.clientHeight]);
+            setMergedChartResizeFunc(prevState => {
+                window.removeEventListener('resize', prevState);
+                window.addEventListener('resize', resizeFunc);
+                return resizeFunc;
+            });
         }
-    }, []);
+    }, [setMergedChartResizeFunc]);
 
-    const [isChartIsolated, setIsChartIsolated] = useState(true)
+    useEffect(() => {
+        if (gestureData.processed) {
+            setGestureSelect(gestureData.labels[0]);
+        }
+    }, [gestureData]);
 
     const gestureSelectOptions = gestureData.labels.map(gesture => getAntdSelectItem(gesture, gesture));
-
-    const visToChartType = (visNumber) => {
-        switch (visNumber) {
-            case 0:
-                return 'raw';
-            case 1:
-                return 'postprocess';
-            case 2:
-                return 'velocity';
-            case 3:
-                return 'distance';
-            case 4:
-                return 'orientation';
-            default:
-                return 'raw';
-        }
-    }
 
     const visualizationStatus = (chartType) => {
         if (chartType === visToChartType(visualizationSelect)) {
@@ -78,51 +73,12 @@ const VisualizePanel = (props) => {
         return 'wait';
     }
 
-    const generateYAxisLabel = (chartType) => {
-        switch (chartType) {
-            case 'raw':
-                return 'Acceleration (m/ms²)';
-            case 'postprocess':
-                return 'Acceleration (m/ms²)';
-            case 'velocity':
-                return 'Velocity (m/ms)';
-            case 'distance':
-                return 'Distance (m)';
-            case 'orientation':
-                return 'Angle (degree)';
-            default:
-                return '';
-        }
-    }
-
-    const getChartLines = (chartType) => {
-        var dataKeys = ['x', 'y', 'z'];
-        var labels = ['X', 'Y', 'Z'];
-        if (chartType === 'orientation') {
-            dataKeys = ['roll', 'pitch', 'yaw'];
-            labels = ['Roll', 'Pitch', 'Yaw'];
-        }
-        return (
-            <>
-                <Line type="monotone" dataKey={dataKeys[0]} name={labels[0]} stroke="#FF4136" dot={false} />
-                <Line type="monotone" dataKey={dataKeys[1]} name={labels[1]} stroke="#3D9970" dot={false} />
-                <Line type="monotone" dataKey={dataKeys[2]} name={labels[2]} stroke="#0074D9" dot={false} />
-            </>
-        );
-    }
-
-    useEffect(() => {
-        if (gestureData.processed) {
-            setGestureSelect(gestureData.labels[0]);
-        }
-    }, [gestureData]);
-
     const getChartData = (gesture, type) => {
         var data = [];
         if (gestureData.processed && gesture !== '') {
             for (var idx = 0; idx < chartData[gesture]['timestamp'].length; idx++) {
                 var entry = {
-                    'timestamp': chartData[gesture]['timestamp'][idx]
+                    timestamp: chartData[gesture]['timestamp'][idx]
                 };
                 for (var item of Object.keys(chartData[gesture][type])) {
                     entry[item] = chartData[gesture][type][item][idx];
@@ -137,7 +93,7 @@ const VisualizePanel = (props) => {
         var data = getChartData(gestureSelect, chartType);
         var width = isChartIsolated ? isolatedChartDim[0] * 0.95 : mergedChartDim[0] * 0.95;
         var height = isChartIsolated ? isolatedChartDim[1] * 0.95 : mergedChartDim[1] * 0.5 * 0.8;
-        var lines = getChartLines(chartType);
+        var lines = getChartLines(chartType, isChartIsolated);
         var minTickGap = isChartIsolated ? 100 : 50;
 
         if (!isChartIsolated) {
@@ -162,7 +118,7 @@ const VisualizePanel = (props) => {
                 <Legend verticalAlign="top" />
                 {lines}
             </LineChart>
-        )
+        );
     }
 
     return (
@@ -176,7 +132,7 @@ const VisualizePanel = (props) => {
             {
                 (gestureData.labels.length !== 0 && gestureData.processed) &&
                 <>
-                    <Title level={2} style={{ marginBottom: '0px' }}>Visualize Processing</Title>
+                    <Title level={2} style={{ marginBottom: '0px' }}>Processing Visualization</Title>
                     <Card size='small' style={{ marginTop: '16px' }}>
                         <Space direction={'horizontal'} size={8} style={{ display: 'flex', height: '100%', justifyContent: 'space-between' }}>
                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
@@ -224,38 +180,38 @@ const VisualizePanel = (props) => {
                     {
                         !isChartIsolated &&
                         <>
-                            <div ref={mergedChartAreaRef} style={{ display: 'flex', flexDirection: 'column', flexGrow: '1' }}>
-                                <Row>
+                            <div ref={mergedChartAreaRef} style={{ display: 'flex', height: '100%', flexDirection: 'column', flexGrow: '1' }}>
+                                <Row style={{ display: 'flex', flexGrow: '1' }}>
                                     <Col span={12}>
-                                        <Card size='small' title="Raw Accelerometer Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Card size='small' title="Raw Accelerometer Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderTop: '0px', borderRight: '0px' }}>
                                             { generateChart('raw') }
                                         </Card>
                                     </Col>
                                     <Col span={12}>
-                                        <Card size='small' title="Post-Processed with Kalman Filter and Rotation" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Card size='small' title="Post-Processed with Kalman Filter and Rotation" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderTop: '0px' }}>
                                             { generateChart('postprocess') }
                                         </Card>
                                     </Col>
                                 </Row>
-                                <Row>
+                                <Row style={{ display: 'flex', flexGrow: '1' }}>
                                     <Col span={8}>
-                                        <Card size='small' title="Computed Velocity Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Card size='small' title="Computed Velocity Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderTop: '0px', borderRight: '0px' }}>
                                             { generateChart('velocity') }
                                         </Card>
                                     </Col>
                                     <Col span={8}>
-                                        <Card size='small' title="Computed Relative Distance Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Card size='small' title="Computed Relative Distance Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderTop: '0px', borderRight: '0px' }}>
                                             { generateChart('distance') }
                                         </Card>
                                     </Col>
                                     <Col span={8}>
-                                        <Card size='small' title="Computed Orientation Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Card size='small' title="Computed Orientation Data" style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderTop: '0px' }}>
                                             { generateChart('orientation') }
                                         </Card>
                                     </Col>
                                 </Row>
-                                </div>
-                                </>
+                            </div>
+                        </>
                     }
                 </>
             }

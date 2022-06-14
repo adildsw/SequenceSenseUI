@@ -1,5 +1,5 @@
 import numpy as np
-from dummy_data_generator import get_concat_data, get_single_data, get_overlap_data, get_confusion_matrix, get_conflict_analysis_data
+from dummy_data_generator import get_concat_data, get_overlap_data, get_confusion_matrix, get_conflict_analysis_data, get_confusion_matrix_data
 
 def classify(labels: list, files: dict, data: dict):
     '''
@@ -69,25 +69,6 @@ def classify(labels: list, files: dict, data: dict):
                 },
                 ...
             },
-            'single': { # Single data for confusion matrix true/predicted visualization
-                'gesture1': {
-                    'timestamp': [],
-                    'distance': {
-                        'x': [],
-                        'y': [],
-                        'z': []
-                    },
-                    'orientation': {
-                        'x': [],
-                        'y': [],
-                        'z': []
-                    }
-                },
-                'gesture2': {
-                    ...
-                },
-                ...
-            },
             'overlap': { # Overlapping data for conflict analysis visualization
                 'gesture1': {
                     'timestamp': [],
@@ -123,12 +104,10 @@ def classify(labels: list, files: dict, data: dict):
     # Dummy code returns static chart data for each gesture in a dictionary
     chart_data = {
         'concat': {},
-        'single': {},
         'overlap': {}
     }
     for label in labels:
         chart_data['concat'][label] = get_concat_data()
-        chart_data['single'][label] = get_single_data()
         chart_data['overlap'][label] = get_overlap_data()
     
     # Dummy code returns random confusion matrix
@@ -163,6 +142,46 @@ def analyze_conflict(sequence : list):
     conflict_analysis_data = get_conflict_analysis_data()
     return conflict_analysis_data
 
-if __name__ == '__main__':
+def get_confusion_chart_data(actual_label, predicted_label):
+    '''
+    Code for getting confusion chart data for a given actual and predicted labels.
+
+    Parameters
+    actual_label (str): actual gesture label
+    predicted_label (str): predicted gesture label
+
+    Returns
+    dict: dictionary containing position and orientation chart data for given actual and predicted labels
+    Example -> {
+        'actual': {
+            'distance': {
+                'x': [],
+                'y': [],
+                'z': []
+            },
+            'orientation': {
+                'roll': [],
+                'pitch': [],
+                'yaw': []
+            }
+        },
+        'predicted': {
+            'distance': {
+                'x': [],
+                'y': [],
+                'z': []
+            },
+            'orientation': {
+                'roll': [],
+                'pitch': [],
+                'yaw': []
+            }
+        }
+    }
+    '''
+
+    # Dummy code returns random chart data
+    return get_confusion_matrix_data()
+
+# if __name__ == '__main__':
     # print(get_chart_data('Jump')['raw']['x'])
-    process(['Jump', 'Wave', 'Swim'], {'Jump': 'test_data/Jump.npy', 'Wave': 'test_data/Wave.npy'}, {'Jump': get_chart_data('Jump'), 'Wave': get_chart_data('Wave')})

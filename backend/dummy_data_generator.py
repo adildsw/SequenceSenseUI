@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 def get_confusion_matrix(n : int):
     # Dummy code returns random confusion matrix
@@ -70,10 +71,19 @@ def get_concat_data():
 
 def get_single_data():
     data = get_chart_data()
+    data['sample'] = [i for i in range(len(data['distance']['x']))]
+    del data['timestamp']
     del data['raw']
     del data['postprocess']
     del data['velocity']
     return data
+
+def get_confusion_matrix_data():
+    data = get_single_data()
+    return {
+        'actual': data,
+        'predicted': data
+    }
 
 def get_overlap_data():
     return get_single_data()
