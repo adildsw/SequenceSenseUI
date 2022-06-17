@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.metrics import confusion_matrix
 
 def get_confusion_matrix(n : int):
     # Dummy code returns random confusion matrix
@@ -12,7 +11,10 @@ def get_confusion_matrix(n : int):
     total = 0
     for i in range(n):
         total += sum(confusion_matrix[i])
-    accuracy = round(correct/total * 10000)/10000
+    try:
+        accuracy = round(correct/total * 10000)/10000
+    except:
+        accuracy = 0
 
     return accuracy, confusion_matrix
 
@@ -86,7 +88,34 @@ def get_confusion_matrix_data():
     }
 
 def get_overlap_data():
-    return get_single_data()
+    data1 = get_single_data()
+    data2 = get_single_data()
+    sample = data1['sample']
+    del data1['sample']
+    del data2['sample']
+
+    for i in range(len(data2['distance']['x'])):
+        data2['distance']['x'][i] += 0.1
+        data2['distance']['y'][i] += 0.1
+        data2['distance']['z'][i] += 0.1
+    
+    for i in range(len(data2['orientation']['roll'])):
+        data2['orientation']['roll'][i] += 20
+        data2['orientation']['pitch'][i] += 20
+        data2['orientation']['yaw'][i] += 20
+
+    data = {
+        'sample': sample,
+        'distance': {
+            'file1': data1['distance'],
+            'file2': data2['distance']
+        },
+        'orientation': {
+            'file1': data1['orientation'],
+            'file2': data2['orientation']
+        }
+    }
+    return data
 
 def get_conflict_analysis_data():
     # Dummy code returns static conflict analysis data

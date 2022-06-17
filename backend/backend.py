@@ -34,6 +34,11 @@ def classify(labels: list, files: dict, data: dict):
     Example -> {
         'accuracy': float (0.0 - 1.0),
         'confusionMatrix': 2x2 list (labels x labels)
+        'conflictChartData': {
+            'confidence': [],
+            'regular': [],
+            'gesture': [],
+        }
         'chartData': {
             'concat': { # Concatenated data for processing visualization
                 'gesture1': {
@@ -71,24 +76,32 @@ def classify(labels: list, files: dict, data: dict):
             },
             'overlap': { # Overlapping data for conflict analysis visualization
                 'gesture1': {
-                    'timestamp': [],
+                    'sample': [],
                     'distance': {
                         'sample1': {
                             'x': [],
                             'y': [],
                             'z': []
-                        }
-                        ,
+                        },
                         'sample2': {
-                            
-                        'x': [],
-                        'y': [],
-                        'z': []
+                            'x': [],
+                            'y': [],
+                            'z': []
+                        },
+                        ...
                     },
                     'orientation': {
-                        'x': [],
-                        'y': [],
-                        'z': []
+                        'sample1': {
+                            'x': [],
+                            'y': [],
+                            'z': []
+                        },
+                        'sample2': {
+                            'x': [],
+                            'y': [],
+                            'z': []
+                        },
+                        ...
                     }
                 },
                 'gesture2': {
@@ -116,7 +129,8 @@ def classify(labels: list, files: dict, data: dict):
     return {
         'accuracy': accuracy,
         'chartData': chart_data,
-        'confusionMatrix': confusion_matrix
+        'confusionMatrix': confusion_matrix,
+        'conflictChartData': analyze_conflict([])
     }
 
 def analyze_conflict(sequence : list):

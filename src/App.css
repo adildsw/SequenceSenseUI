@@ -23,4 +23,40 @@ body {
     max-height: 100vh;
     height: 100vh;
     overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+.atomic-action {
+    padding: 8px;
+    margin-bottom: 4px;
+    border-radius: 5px;
+    width: 100%;
+    display: flex;
+    flex-direction: horizontal;
+    align-items: center;
+    cursor: pointer;
+}
+
+span, th, td, h2, img, tspan, .ant-card-head-title, .ant-steps-item-title, .ant-steps-item-description {
+    user-select: none;
+}
+
+.atomic-action.selected {
+    background: #f1f1f1 !important;
+}
+
+.atomic-action:hover {
+    background: #f8f8f8;
+}
+
+.atomic-action:active {
+    background: #eee;
+}
+
+.sequence-atomic-action:hover {
+    filter: invert(20%) !important;
+}
+
+.sequence-atomic-action:active {
+    filter: invert(25%) !important;
 }

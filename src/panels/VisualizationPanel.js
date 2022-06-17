@@ -13,12 +13,10 @@ import { AppstoreOutlined, InfoCircleFilled, LineChartOutlined } from "@ant-desi
 const { Title, Text } = Typography;
 const { Step } = Steps;
 
-const VisualizePanel = (props) => {
+const VisualizationPanel = (props) => {
 
-    const { gestureData, classifierData, isChartIsolated, setIsChartIsolated, setIsolatedChartResizeFunc, setMergedChartResizeFunc } = props;
-    const chartData = classifierData.chartData.concat;
+    const { gestureData, classifierData, isChartIsolated, selectedGesture, setSelectedGesture, generatedData, setGeneratedData, setIsChartIsolated, setIsolatedChartResizeFunc, setMergedChartResizeFunc } = props;
 
-    const [gestureSelect, setGestureSelect] = useState('');
     const [visualizationSelect, setVisualizationSelect] = useState(0);
 
     const [axisReferenceModalVisibility, setAxisReferenceModalVisibility] = useState(false);
@@ -59,10 +57,10 @@ const VisualizePanel = (props) => {
     }, [setMergedChartResizeFunc]);
 
     useEffect(() => {
-        if (gestureData.processed) {
-            setGestureSelect(gestureData.labels[0]);
+        if (gestureData.processed && selectedGesture === '') {
+            setSelectedGesture(gestureData.labels[0]);
         }
-    }, [gestureData]);
+    }, [gestureData, selectedGesture, setSelectedGesture]);
 
     const gestureSelectOptions = gestureData.labels.map(gesture => getAntdSelectItem(gesture, gesture));
 
@@ -74,6 +72,14 @@ const VisualizePanel = (props) => {
     }
 
     const getChartData = (gesture, type) => {
+        if (generatedData.hasOwnProperty('vis-' + selectedGesture + '-' + gesture + '-' + type)) {
+            return generatedData['vis-' + selectedGesture + '-' + gesture + '-' + type];
+        }
+
+        if (!Object.keys(classifierData).includes('chartData')) return [];
+        if (!Object.keys(classifierData.chartData).includes('concat')) return [];
+        const chartData = classifierData.chartData.concat;
+
         var data = [];
         if (gestureData.processed && gesture !== '') {
             for (var idx = 0; idx < chartData[gesture]['timestamp'].length; idx++) {
@@ -86,11 +92,18 @@ const VisualizePanel = (props) => {
                 data.push(entry);
             }
         }
+
+        if (data.length !== 0) {
+            setGeneratedData(prevState => {
+                prevState['vis-' + selectedGesture + '-' + gesture + '-' + type] = data;
+                return prevState;
+            });
+        }
         return data;
     }
 
     const generateChart = (chartType) => {
-        var data = getChartData(gestureSelect, chartType);
+        var data = getChartData(selectedGesture, chartType);
         var width = isChartIsolated ? isolatedChartDim[0] * 0.95 : mergedChartDim[0] * 0.95;
         var height = isChartIsolated ? isolatedChartDim[1] * 0.95 : mergedChartDim[1] * 0.5 * 0.8;
         var lines = getChartLines(chartType, isChartIsolated);
@@ -133,7 +146,7 @@ const VisualizePanel = (props) => {
                 (gestureData.labels.length !== 0 && gestureData.processed) &&
                 <>
                     <Title level={2} style={{ marginBottom: '0px' }}>Processing Visualization</Title>
-                    <Card size='small' style={{ marginTop: '16px' }}>
+                    <Card size='small' style={{ marginTop: '12px' }}>
                         <Space direction={'horizontal'} size={8} style={{ display: 'flex', height: '100%', justifyContent: 'space-between' }}>
                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
                                 <Text strong>Select Gesture</Text>
@@ -143,8 +156,8 @@ const VisualizePanel = (props) => {
                                     options={gestureSelectOptions}
                                     bordered={true}
                                     defaultValue={gestureSelectOptions[0].value}
-                                    value={gestureSelect}
-                                    onChange={(value) => { setGestureSelect(value); }}
+                                    value={selectedGesture}
+                                    onChange={(value) => { setSelectedGesture(value); }}
                                 />
                             </Space>
                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
@@ -219,4 +232,4 @@ const VisualizePanel = (props) => {
     )
 }
 
-export default VisualizePanel;
+export default VisualizationPanel;

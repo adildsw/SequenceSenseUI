@@ -79,7 +79,6 @@ const AccuracyPanel = (props) => {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
                 setClassificationVisualizationModalVisibility(() => {
                     setSelectedClassification({ actualIdx: actualIdx, predictedIdx: predictedIdx, actual: data.actual, predicted: data.predicted });
                     return true; 
@@ -132,12 +131,12 @@ const AccuracyPanel = (props) => {
                     mouseEnterDelay: 0.3
                 }
                 matrixRow.push(
-                    <Tooltip {...tooltipParams}>
-                        <Button {...buttonParams}>{classifierData.confusionMatrix[i][j]}</Button>
+                    <Tooltip key={j} {...tooltipParams}>
+                        <Button key={j} {...buttonParams}>{classifierData.confusionMatrix[i][j]}</Button>
                     </Tooltip>
                 );
             }
-            matrix.push(<Space direction='horizontal' size={0} style={{ display: 'flex' }}>{matrixRow}</Space>);
+            matrix.push(<Space key={i} direction='horizontal' size={0} style={{ display: 'flex' }}>{matrixRow}</Space>);
         }
         return (
             <Space direction='vertical' size={0} style={{ display: 'flex' }}>
@@ -200,7 +199,6 @@ const AccuracyPanel = (props) => {
                 data.push(entry);
             }
         }
-        console.log(data);
         return data;
     }
 
@@ -225,7 +223,7 @@ const AccuracyPanel = (props) => {
                 <YAxis minTickGap={minTickGap}>
                     <Label value={generateYAxisLabel(chartType)} angle={-90} />
                 </YAxis>
-                <ChartTooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Timestamp: ' + value + ' ms'}/>
+                <ChartTooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Sample: ' + value}/>
                 <Legend verticalAlign="top" />
                 {lines}
             </LineChart>
@@ -263,10 +261,10 @@ const AccuracyPanel = (props) => {
                         <>
                             <Col ref={confusionMatrixPanelAreaRef} span={9} style={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: '8px', borderRight: '1px solid #f0f0f0' }} >
                                 <Title level={2} style={{ marginBottom: '0px' }}>Classification Result</Title>
-                                <Card size={'small'} style={{ marginTop: '16px' }} bodyStyle={{ padding: '0px' }} className='scrollable-section full-height-card-body'>
+                                <Card size={'small'} style={{ marginTop: '12px' }} bodyStyle={{ padding: '0px' }} className='scrollable-section full-height-card-body'>
                                     {generateAccuracyTableUI()}
                                 </Card>
-                                <Card ref={confusionMatrixPanelAreaRef} size={'small'} style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center'}} >
+                                <Card ref={confusionMatrixPanelAreaRef} size={'small'} style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}} >
                                     {generateConfusionMatrixUI()}
                                 </Card>
                             </Col>
@@ -287,16 +285,16 @@ const AccuracyPanel = (props) => {
                                     <>
                                         <Space direction={'horizontal'} size={8} style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
-                                            <Title level={2} style={{ marginBottom: '16px' }}>Visualization</Title>
+                                            <Title level={2} style={{ marginBottom: '12px' }}>Visualization</Title>
                                             </Space>
                                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
                                             <Tooltip title='Axis Frame Reference'>
-                                                <Button shape="circle" icon={<InfoCircleFilled />} size={'middle'} style={{ marginBottom: '16px' }} onClick={() => { setAxisReferenceModalVisibility(true); }} />
+                                                <Button shape="circle" icon={<InfoCircleFilled />} size={'middle'} style={{ marginBottom: '12px' }} onClick={() => { setAxisReferenceModalVisibility(true); }} />
                                             </Tooltip>
                                             </Space>
                                         </Space>
                                         <div style={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
-                                            <div style={{ flexGrow: '1', paddingBottom: '8px' }}>
+                                            <div style={{ flexGrow: '1', paddingBottom: '12px' }}>
                                                 <Card 
                                                     title={
                                                     <>
@@ -317,7 +315,7 @@ const AccuracyPanel = (props) => {
                                                     </div>
                                                 </Card>
                                             </div>
-                                            <div style={{ flexGrow: '1', paddingTop: '8px' }}>
+                                            <div style={{ flexGrow: '1' }}>
                                                 <Card 
                                                     title={
                                                         <>
@@ -347,10 +345,10 @@ const AccuracyPanel = (props) => {
                         <>
                             <Col span={15} style={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: '8px' }} >
                                 <Title level={2} style={{ marginBottom: '0px' }}>Classification Result</Title>
-                                <Card ref={confusionMatrixPanelAreaRef} size={'small'} style={{ marginTop: '16px', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}} >
+                                <Card ref={confusionMatrixPanelAreaRef} size={'small'} style={{ marginTop: '12px', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}} >
                                     {generateConfusionMatrixUI()}
                                 </Card>
-                                <Card size={'small'} style={{ height: '100%', marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Card size={'small'} style={{ height: '100%', marginTop: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     {
                                         isFetchingConfusionMatrixAnalysis ? 
                                         <Space direction={'vertical'} size={8} style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
@@ -381,9 +379,9 @@ const AccuracyPanel = (props) => {
                                 title={
                                 <>
                                     <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
-                                        <Title level={2} style={{ marginBottom: '16px' }}>Visualization</Title>
+                                        <Title level={2} style={{ marginBottom: '12px' }}>Visualization</Title>
                                         <Tooltip title="Axis Frame Reference">
-                                            <Button shape="circle" icon={<InfoCircleFilled />} size={'middle'} style={{ marginBottom: '16px' }} onClick={() => { setAxisReferenceModalVisibility(true); }} />
+                                            <Button shape="circle" icon={<InfoCircleFilled />} size={'middle'} style={{ marginBottom: '12px' }} onClick={() => { setAxisReferenceModalVisibility(true); }} />
                                         </Tooltip>
                                     </Space>
                                 </>}

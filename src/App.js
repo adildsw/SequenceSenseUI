@@ -9,24 +9,30 @@ import icon from './assets/sequence-sense-icon.svg';
 import banner from './assets/sequence-sense-banner.svg';
 
 import './App.css';
-import VisualizePanel from './panels/VisualizationPanel';
+import VisualizationPanel from './panels/VisualizationPanel';
 import ConflictPanel from './panels/ConflictPanel';
 import AccuracyPanel from './panels/AccuracyPanel';
+import ComponentVisualizationPanel from './panels/ComponentVisualizationPanel';
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
 
 const MIN_ALLOWED_HEIGHT = 800;
+const MIN_ALLOWED_WIDTH = 1300;
 
 const SERVER_ADDRESS = 'http://192.168.192.39:3001';
 
 const App = () => {
 
     const [menuSelection, setMenuSelection] = useState('dataset');
-    const [gestureData, setGestureData] = useState({'processed': false, 'labels': [], 'files': {}, 'data': {}});
+    const [gestureData, setGestureData] = useState({processed: false, labels: [], files: {}, data: {}});
     const [classifierData, setClassifierData] = useState({});
+    const [conflictData, setConflictData] = useState({ gestureSequence: '', chartData: [] })
     const [selectedClassification, setSelectedClassification] = useState({ actualIdx: -1, predictedIdx: -1, actual: {}, predicted: {} });
-    const [isVisualizationChartIsolated, setIsVisualizationChartIsolated] = useState(false);
+    const [isVisualizationChartIsolated, setIsVisualizationChartIsolated] = useState(true);
+    const [selectedGesture, setSelectedGesture] = useState('');
+    const [generatedData, setGeneratedData] = useState({});
+    const [gestureSequence, setGestureSequence] = useState([]);
 
     // Loading Variables
     const [isFetchingClassificationResult, setIsFetchingClassificationResult] = useState(false);
@@ -38,16 +44,20 @@ const App = () => {
     const [confusionMatrixChartResizeFunc, setConfusionMatrixChartResizeFunc] = useState(null);
     const [isolatedChartResizeFunc, setIsolatedChartResizeFunc] = useState(null);
     const [mergedChartResizeFunc, setMergedChartResizeFunc] = useState(null);
+    const [componentChartResizeFunc, setComponentChartResizeFunc] = useState(null);
+    const [conflictChartResizeFunc, setConflictChartResizeFunc] = useState(null);
+    const [sequenceDesignerResizeFunc, setSequenceDesignerResizeFunc] = useState(null);
+    const [previewResizeFunc, setPreviewResizeFunc] = useState(null);
 
     const { useBreakpoint } = Grid;
 
     const screenConfig = useBreakpoint();
-    const [availHeight, setAvailHeight] = useState(0);
+    const [availWindowDim, setAvailWindowDim] = useState([0, 0]);
 
     useEffect(() => {
-        setAvailHeight(window.innerHeight);
+        setAvailWindowDim([window.innerWidth, window.innerHeight]);
         window.addEventListener('resize', () => {
-            setAvailHeight(window.innerHeight);
+            setAvailWindowDim([window.innerWidth, window.innerHeight]);
         });
     }, []);
 
@@ -60,7 +70,7 @@ const App = () => {
     return (
         <>
             { 
-                ((!screenConfig.xl && !screenConfig.xxl) || (availHeight < MIN_ALLOWED_HEIGHT)) && 
+                ((!screenConfig.xl && !screenConfig.xxl) || (availWindowDim[0] < MIN_ALLOWED_WIDTH) || (availWindowDim[1] < MIN_ALLOWED_HEIGHT)) && 
                 <Space direction={'vertical'} size={8} style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
                     <Image src={banner} preview={false} />
                     <Text strong>ERROR: Unsupported Screen Size</Text>
@@ -97,6 +107,7 @@ const App = () => {
                                             setGestureData={setGestureData} 
                                             setClassifierData={setClassifierData} 
                                             setSelectedClassification={setSelectedClassification}
+                                            setGeneratedData={setGeneratedData}
                                             serverAddress={SERVER_ADDRESS} 
                                             isFetchingClassificationResult={isFetchingClassificationResult} 
                                             setIsFetchingClassificationResult={setIsFetchingClassificationResult}
@@ -107,7 +118,6 @@ const App = () => {
                                             screenConfig={screenConfig} 
                                             gestureData={gestureData} 
                                             classifierData={classifierData} 
-                                            setAvailHeight={setAvailHeight} 
                                             selectedClassification={selectedClassification} 
                                             setSelectedClassification={setSelectedClassification} 
                                             serverAddress={SERVER_ADDRESS}
@@ -124,13 +134,17 @@ const App = () => {
                                 menuSelection === 'visualization' &&
                                 <Row>
                                     <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24} style={{ height: '100vh', maxHeight: '100vh' }}>
-                                        <VisualizePanel 
+                                        <VisualizationPanel 
                                             gestureData={gestureData} 
                                             classifierData={classifierData} 
+                                            selectedGesture={selectedGesture}
+                                            setSelectedGesture={setSelectedGesture}
                                             setIsolatedChartResizeFunc={setIsolatedChartResizeFunc}
                                             setMergedChartResizeFunc={setMergedChartResizeFunc} 
                                             isChartIsolated={isVisualizationChartIsolated}
                                             setIsChartIsolated={setIsVisualizationChartIsolated}
+                                            generatedData={generatedData}
+                                            setGeneratedData={setGeneratedData}
                                         />
                                     </Col>
                                 </Row>
@@ -138,8 +152,34 @@ const App = () => {
                             {
                                 menuSelection === 'conflicts' &&
                                 <Row>
-                                    <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24} style={{ height: '100vh', maxHeight: '100vh' }}>
-                                        <ConflictPanel />
+                                    <Col span={16} style={{ height: '100vh', maxHeight: '100vh', borderRight: '1px solid #f0f0f0' }}>
+                                        <ConflictPanel 
+                                            gestureData={gestureData}
+                                            classifierData={classifierData}
+                                            selectedGesture={selectedGesture}
+                                            setSelectedGesture={setSelectedGesture} 
+                                            gestureSequence={gestureSequence}
+                                            setGestureSequence={setGestureSequence}
+                                            setConflictChartResizeFunc={setConflictChartResizeFunc}
+                                            setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc}
+                                            setPreviewResizeFunc={setPreviewResizeFunc}
+                                            isFetchingConflictAnalysis={isFetchingConflictAnalysis}
+                                            setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis}
+                                            conflictData={conflictData}
+                                            setConflictData={setConflictData}
+                                            screenConfig={screenConfig}
+                                        />
+                                    </Col>
+                                    <Col span={8} style={{ height: '100vh', maxHeight: '100vh' }}>
+                                        <ComponentVisualizationPanel 
+                                            gestureData={gestureData}
+                                            classifierData={classifierData}
+                                            selectedGesture={selectedGesture}
+                                            setSelectedGesture={setSelectedGesture}
+                                            setComponentChartResizeFunc={setComponentChartResizeFunc}
+                                            generatedData={generatedData}
+                                            setGeneratedData={setGeneratedData}
+                                        />
                                     </Col>
                                 </Row>
                             }

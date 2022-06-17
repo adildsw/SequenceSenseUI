@@ -10,7 +10,7 @@ const { Title, Text } = Typography;
 
 const DatasetPanel = (props) => {
 
-    const { gestureData, setGestureData, setClassifierData, setSelectedClassification, isFetchingClassificationResult, setIsFetchingClassificationResult, serverAddress } = props;
+    const { gestureData, setGestureData, setClassifierData, setSelectedClassification, setGeneratedData, isFetchingClassificationResult, setIsFetchingClassificationResult, serverAddress } = props;
 
     const [uploadType, setUploadType] = useState('single');
     const [uploadGesture, setUploadGesture] = useState('');
@@ -94,6 +94,7 @@ const DatasetPanel = (props) => {
     }
 
     const processGesture = () => {
+        setGeneratedData({});
         setIsFetchingClassificationResult(true);
         setSelectedClassification({ actualIdx: -1, predictedIdx: -1, predicted: {}, actual: {} });
         initiateProcessing();
@@ -155,7 +156,7 @@ const DatasetPanel = (props) => {
             <Title level={2} style={{ marginBottom: '0px' }}>Manage Dataset</Title>
 
             {/* Upload Gesture Samples */}
-            <Card size='small' style={{ marginTop: '16px', borderBottom: '0px' }}>
+            <Card size='small' style={{ marginTop: '12px', borderBottom: '0px' }}>
                 <Text strong>Upload Gesture Samples</Text>
             </Card>
             <Card size='small'>
@@ -210,7 +211,7 @@ const DatasetPanel = (props) => {
             </Card>
 
             {/* Manage Uploaded Samples */}
-            <Card size='small' style={{ marginTop: '16px', borderBottom: '0px' }}>
+            <Card size='small' style={{ marginTop: '12px', borderBottom: '0px' }}>
                 <Text strong>Browse Uploaded Samples</Text>
             </Card>
             <Card className='scrollable-section full-height-card-body' size='small'>
@@ -276,7 +277,7 @@ const DatasetPanel = (props) => {
 
             {/* Start Processing */}
             <Button 
-                style={{ marginTop: '16px', minHeight: '64px' }} 
+                style={{ marginTop: '12px', minHeight: '64px' }} 
                 type={Object.keys(gestureData.data).length === 0 ? 'dashed' : 'primary'}
                 ghost={Object.keys(gestureData.data).length === 0}
                 block 
