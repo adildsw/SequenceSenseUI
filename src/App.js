@@ -33,6 +33,7 @@ const App = () => {
     const [selectedGesture, setSelectedGesture] = useState('');
     const [generatedData, setGeneratedData] = useState({});
     const [gestureSequence, setGestureSequence] = useState([]);
+    const [isComponentVisualizationVisible, setIsComponentVisualizationVisible] = useState(false);
 
     // Loading Variables
     const [isFetchingClassificationResult, setIsFetchingClassificationResult] = useState(false);
@@ -152,7 +153,7 @@ const App = () => {
                             {
                                 menuSelection === 'conflicts' &&
                                 <Row>
-                                    <Col span={16} style={{ height: '100vh', maxHeight: '100vh', borderRight: '1px solid #f0f0f0' }}>
+                                    <Col span={isComponentVisualizationVisible ? 16 : 24} style={{ height: '100vh', maxHeight: '100vh', borderRight: '1px solid #f0f0f0' }}>
                                         <ConflictPanel 
                                             gestureData={gestureData}
                                             classifierData={classifierData}
@@ -168,19 +169,26 @@ const App = () => {
                                             conflictData={conflictData}
                                             setConflictData={setConflictData}
                                             screenConfig={screenConfig}
+                                            isComponentVisualizationVisible={isComponentVisualizationVisible}
+                                             setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
                                         />
                                     </Col>
-                                    <Col span={8} style={{ height: '100vh', maxHeight: '100vh' }}>
-                                        <ComponentVisualizationPanel 
-                                            gestureData={gestureData}
-                                            classifierData={classifierData}
-                                            selectedGesture={selectedGesture}
-                                            setSelectedGesture={setSelectedGesture}
-                                            setComponentChartResizeFunc={setComponentChartResizeFunc}
-                                            generatedData={generatedData}
-                                            setGeneratedData={setGeneratedData}
-                                        />
-                                    </Col>
+                                    {
+                                        isComponentVisualizationVisible &&
+                                        <Col span={8} style={{ height: '100vh', maxHeight: '100vh' }}>
+                                            <ComponentVisualizationPanel 
+                                                gestureData={gestureData}
+                                                classifierData={classifierData}
+                                                selectedGesture={selectedGesture}
+                                                setSelectedGesture={setSelectedGesture}
+                                                setComponentChartResizeFunc={setComponentChartResizeFunc}
+                                                generatedData={generatedData}
+                                                setGeneratedData={setGeneratedData}
+                                                isComponentVisualizationVisible={isComponentVisualizationVisible}
+                                                setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
+                                            />
+                                        </Col>
+                                    }
                                 </Row>
                             }
                         </Content>

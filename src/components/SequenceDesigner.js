@@ -100,19 +100,14 @@ const SequenceDesigner = (props) => {
                         gestureSequence.length === 0 ? 
                         isActive ?
                         <Text type={'secondary'}>
-                            Drag and Drop Atomic Actions Here
+                            Drop Atomic Action Here
                         </Text> :
                         <Text type={'secondary'}>
-                            Drop Atomic Action Here
+                            Drag and Drop Atomic Actions Here
                         </Text> : 
-                        <>
                         <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                             { generateGestureSequenceFlow(gestureSequence) }
                         </div>
-                        <div>
-                            Hello
-                        </div>
-                        </>
                     }
                 </div>
             </Card>

@@ -1,7 +1,7 @@
-import { InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { Card, Col, Image, Row, Select, Space, Typography } from "antd";
+import { InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Image, Row, Select, Space, Typography, Tooltip } from "antd";
 import { useCallback, useEffect, useState } from "react";
-import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend } from "recharts";
 import AtomicAction from "../components/AtomicAction";
 import SequenceDesigner from "../components/SequenceDesigner";
 import { getAnim } from "../utils/AnimUtils";
@@ -12,12 +12,16 @@ const { Title, Text } = Typography;
 
 const ConflictPanel = (props) => {
 
-    const { gestureData, classifierData, selectedGesture, setSelectedGesture, gestureSequence, setGestureSequence, conflictData, setConflictData, isFetchingConflictAnalysis, setIsFetchingConflictAnalysis, screenConfig, setConflictChartResizeFunc, setSequenceDesignerResizeFunc, setPreviewResizeFunc } = props;
+    const { gestureData, classifierData, selectedGesture, setSelectedGesture, gestureSequence, setGestureSequence, conflictData, setConflictData, isFetchingConflictAnalysis, setIsFetchingConflictAnalysis, screenConfig, setConflictChartResizeFunc, setSequenceDesignerResizeFunc, setPreviewResizeFunc, isComponentVisualizationVisible, setIsComponentVisualizationVisible } = props;
 
     const [selectedAtomicAction, setSelectedAtomicAction] = useState(null);
 
     const [conflictChartDim, setConflictChartDim] = useState([0, 0]);
     const [previewDim, setPreviewDim] = useState([0, 0]);
+
+    useEffect(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, [isComponentVisualizationVisible]);
 
     const conflictChartAreaRef = useCallback(node => {
         if (node !== null) {
@@ -123,7 +127,7 @@ const ConflictPanel = (props) => {
         var minTickGap = 50;
         
         return (
-            <LineChart width={width} height={height} data={data} margin={{ top: 5, bottom: 5, right: 0, left: 0 }}>
+            <LineChart width={width} height={height} data={data} margin={{ top: 5, bottom: 5, right: 0, left: 0 }} style={{ maxWidth: width/2 }}>
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='confidence' minTickGap={minTickGap} tick={true} ticks={[0, 0.25, 0.5, 0.75, 1]} type='number' domain={[0, 1]} tickFormatter={(value) => Math.round(value * 100) / 100}>
                     <Label value='Confidence' position={'insideBottom'} offset={-2} />
@@ -140,7 +144,14 @@ const ConflictPanel = (props) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px' }}>
-            <Title level={2} style={{ marginBottom: '12px' }}>Analyze Gesture Conflicts</Title>
+            <Space direction='horizontal' style={{ display: 'flex', flexDirection: 'row', marginBottom: '12px', justifyContent: 'space-between' }}>
+                <Title level={2} style={{ margin: 0 }}>Analyze Gesture Conflicts</Title>
+                { 
+                    isComponentVisualizationVisible ? 
+                    <MenuUnfoldOutlined style={{ fontSize: '24px' }} onClick={() => { setIsComponentVisualizationVisible(false); }} /> : 
+                    <MenuFoldOutlined style={{ fontSize: '24px' }} onClick={() => { setIsComponentVisualizationVisible(true); }} />
+                }
+            </Space>
             <Card size='small' style={{ display: 'flex', borderBottom: '0px' }}>
                 <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
                     <Text strong>Select Gesture</Text>
@@ -192,7 +203,7 @@ const ConflictPanel = (props) => {
                     </Card>
                 </Col>
                 <Col xl={8} xxl={6} style={{ height: '100%', paddingLeft: '6px' }}>
-                    <Card title={'Sequence Report'}  size='small' style={{ height: '100%' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
+                    <Card size='small' style={{ height: '100%' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
                         {
                             isFetchingConflictAnalysis ? // Replace with loading variable
                             <Space direction={'vertical'} size={8} style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
