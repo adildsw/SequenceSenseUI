@@ -20,7 +20,7 @@ const { Text } = Typography;
 const MIN_ALLOWED_HEIGHT = 800;
 const MIN_ALLOWED_WIDTH = 1300;
 
-const SERVER_ADDRESS = 'http://192.168.192.39:3001';
+const SERVER_ADDRESS = 'http://192.168.0.202:3001';
 
 const App = () => {
 
@@ -146,6 +146,7 @@ const App = () => {
                                             setIsChartIsolated={setIsVisualizationChartIsolated}
                                             generatedData={generatedData}
                                             setGeneratedData={setGeneratedData}
+                                            setGestureSequence={setGestureSequence}
                                         />
                                     </Col>
                                 </Row>

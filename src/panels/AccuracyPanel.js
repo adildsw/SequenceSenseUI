@@ -79,6 +79,7 @@ const AccuracyPanel = (props) => {
                 return response.json();
             })
             .then(data => {
+                console.log(data);
                 setClassificationVisualizationModalVisibility(() => {
                     setSelectedClassification({ actualIdx: actualIdx, predictedIdx: predictedIdx, actual: data.actual, predicted: data.predicted });
                     return true; 

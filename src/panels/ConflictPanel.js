@@ -1,7 +1,7 @@
-import { InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { DownloadOutlined, InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button, Card, Col, Image, Row, Select, Space, Typography, Tooltip } from "antd";
 import { useCallback, useEffect, useState } from "react";
-import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend } from "recharts";
+import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine } from "recharts";
 import AtomicAction from "../components/AtomicAction";
 import SequenceDesigner from "../components/SequenceDesigner";
 import { getAnim } from "../utils/AnimUtils";
@@ -132,12 +132,13 @@ const ConflictPanel = (props) => {
                 <XAxis dataKey='confidence' minTickGap={minTickGap} tick={true} ticks={[0, 0.25, 0.5, 0.75, 1]} type='number' domain={[0, 1]} tickFormatter={(value) => Math.round(value * 100) / 100}>
                     <Label value='Confidence' position={'insideBottom'} offset={-2} />
                 </XAxis>
-                <YAxis minTickGap={100} tick={true} ticks={[0, 1]}>
-                    <Label value={'TP (Gestures) / FP (Regular Activities)'} angle={-90} offset={-5} style={{ marginRight: '100px'}} />
+                <YAxis tick={true} ticks={[0, 1]}>
+                    <Label value={'Detection Rate'} angle={-90} offset={-5} style={{ marginRight: '100px'}} />
                 </YAxis>
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Confidence: ' + Math.round(value * 10000) / 10000}/>
                 <Legend verticalAlign="top" />
                 {lines}
+                <ReferenceLine x={0.9} stroke={'#001f3f'} strokeWidth={2} strokeDasharray={3} />
             </LineChart>
         );
     }
@@ -152,18 +153,21 @@ const ConflictPanel = (props) => {
                     <MenuFoldOutlined style={{ fontSize: '24px' }} onClick={() => { setIsComponentVisualizationVisible(true); }} />
                 }
             </Space>
-            <Card size='small' style={{ display: 'flex', borderBottom: '0px' }}>
-                <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
-                    <Text strong>Select Gesture</Text>
-                    <Select
-                        style={{ width: 320 }}
-                        placeholder='Select Gesture'
-                        options={gestureSelectOptions}
-                        bordered={true}
-                        defaultValue={gestureSelectOptions[0].value}
-                        value={selectedGesture}
-                        onChange={(value) => { setSelectedGesture(value); }}
-                    />
+            <Card size='small' style={{ display: 'flex', borderBottom: '0px' }} bodyStyle={{ width: '100%' }}>
+                <Space direction={'horizontal'} size={8} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Space direction={'horizontal'} size={8} style={{ width: '100%', display: 'flex', flexDirection: 'row' }}>
+                        <Text strong>Select Gesture</Text>
+                        <Select
+                            style={{ width: 320 }}
+                            placeholder='Select Gesture'
+                            options={gestureSelectOptions}
+                            bordered={true}
+                            defaultValue={gestureSelectOptions[0].value}
+                            value={selectedGesture}
+                            onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); console.log(classifierData.atomicSeq); }}
+                        />
+                    </Space>
+                    <Button><DownloadOutlined />Export Recognizer</Button>
                 </Space>
             </Card>
             <Card size='small' style={{ marginBottom: '12px' }} bodyStyle={{ display: 'flex', width: '100%' }}>

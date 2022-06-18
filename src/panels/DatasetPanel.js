@@ -118,6 +118,7 @@ const DatasetPanel = (props) => {
                     return {...prevState, 'processed': true};
                 });
                 setClassifierData(data);
+                console.log(data);
                 if (data.accuracy > 0.8)
                     message.success('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
                 else if (data.accuracy > 0.5)

@@ -34,6 +34,7 @@ def classify(labels: list, files: dict, data: dict):
     Example -> {
         'accuracy': float (0.0 - 1.0),
         'confusionMatrix': 2x2 list (labels x labels)
+        'atomicSeq': {}
         'conflictChartData': {
             'confidence': [],
             'regular': [],
@@ -119,9 +120,11 @@ def classify(labels: list, files: dict, data: dict):
         'concat': {},
         'overlap': {}
     }
+    atomicSeq = {}
     for label in labels:
         chart_data['concat'][label] = get_concat_data()
         chart_data['overlap'][label] = get_overlap_data()
+        atomicSeq[label] = ['a0', 'a1']
     
     # Dummy code returns random confusion matrix
     accuracy, confusion_matrix = get_confusion_matrix(len(labels))
@@ -129,6 +132,7 @@ def classify(labels: list, files: dict, data: dict):
     return {
         'accuracy': accuracy,
         'chartData': chart_data,
+        'atomicSeq': atomicSeq,
         'confusionMatrix': confusion_matrix,
         'conflictChartData': analyze_conflict([])
     }

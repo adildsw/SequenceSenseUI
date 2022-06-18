@@ -15,7 +15,7 @@ const { Step } = Steps;
 
 const VisualizationPanel = (props) => {
 
-    const { gestureData, classifierData, isChartIsolated, selectedGesture, setSelectedGesture, generatedData, setGeneratedData, setIsChartIsolated, setIsolatedChartResizeFunc, setMergedChartResizeFunc } = props;
+    const { gestureData, classifierData, isChartIsolated, selectedGesture, setSelectedGesture, setGestureSequence, generatedData, setGeneratedData, setIsChartIsolated, setIsolatedChartResizeFunc, setMergedChartResizeFunc } = props;
 
     const [visualizationSelect, setVisualizationSelect] = useState(0);
 
@@ -157,7 +157,7 @@ const VisualizationPanel = (props) => {
                                     bordered={true}
                                     defaultValue={gestureSelectOptions[0].value}
                                     value={selectedGesture}
-                                    onChange={(value) => { setSelectedGesture(value); }}
+                                    onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); console.log(classifierData.atomicSeq); }}
                                 />
                             </Space>
                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>
