@@ -67,7 +67,7 @@ const SequenceDesigner = (props) => {
                 marginRight: marginLeft,
             }
             gestureSequenceFlow.push(
-                <Tooltip title={gestureSequence[i]}>
+                <Tooltip key={i} title={gestureSequence[i]}>
                     <Image className={'sequence-atomic-action'} src={srcImg} preview={false} style={style} />
                 </Tooltip>
             )

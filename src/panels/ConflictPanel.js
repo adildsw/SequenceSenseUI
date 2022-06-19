@@ -58,8 +58,10 @@ const ConflictPanel = (props) => {
     useEffect(() => {
         if (gestureData.processed && selectedGesture === '') {
             setSelectedGesture(gestureData.labels[0]);
+            setGestureSequence(classifierData.atomicSeq[gestureData.labels[0]]);
+            console.log("triggered");
         }
-    }, [gestureData, selectedGesture, setSelectedGesture]);
+    }, [gestureData, selectedGesture, setSelectedGesture, setGestureSequence, classifierData]);
 
     const gestureSelectOptions = gestureData.labels.map(gesture => getAntdSelectItem(gesture, gesture));
 
@@ -190,7 +192,7 @@ const ConflictPanel = (props) => {
                                     <Text type={'secondary'}>
                                         <InfoCircleOutlined /> <b>Tip:</b> Select atomic action or click on <i>Preview Sequence</i> to preview the gesture.
                                     </Text> :
-                                    <Image src={getAnim(selectedAtomicAction)} preview={true} style={{ height: previewDim[1] * 0.9 + 'px' }} />
+                                    <Image src={getAnim(selectedAtomicAction)} preview={false} style={{ height: previewDim[1] * 0.9 + 'px' }} />
                                 }
                             </div>
 

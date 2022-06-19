@@ -59,8 +59,10 @@ const VisualizationPanel = (props) => {
     useEffect(() => {
         if (gestureData.processed && selectedGesture === '') {
             setSelectedGesture(gestureData.labels[0]);
+            setGestureSequence(classifierData.atomicSeq[gestureData.labels[0]]);
+            console.log("triggered");
         }
-    }, [gestureData, selectedGesture, setSelectedGesture]);
+    }, [gestureData, selectedGesture, setSelectedGesture, setGestureSequence, classifierData]);
 
     const gestureSelectOptions = gestureData.labels.map(gesture => getAntdSelectItem(gesture, gesture));
 
@@ -157,7 +159,7 @@ const VisualizationPanel = (props) => {
                                     bordered={true}
                                     defaultValue={gestureSelectOptions[0].value}
                                     value={selectedGesture}
-                                    onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); console.log(classifierData.atomicSeq); }}
+                                    onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); }}
                                 />
                             </Space>
                             <Space direction={'horizontal'} size={8} style={{ display: 'flex' }}>

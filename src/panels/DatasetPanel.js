@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Typography, Space, Card, Segmented, AutoComplete, Button, Empty, Upload, Tree, message, Popconfirm } from 'antd';
-import { CopyOutlined, FileOutlined, UploadOutlined, InfoCircleOutlined, DownOutlined, SettingFilled, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
+import { Typography, Space, Card, Segmented, AutoComplete, Button, Empty, Upload, Tree, message, Popconfirm, Tooltip } from 'antd';
+import { CopyOutlined, FileOutlined, UploadOutlined, InfoCircleOutlined, DownOutlined, SettingFilled, DeleteOutlined, CheckOutlined, DownloadOutlined } from '@ant-design/icons';
+import { saveAs } from 'file-saver';
 
 import { getAntdSegmentedItem, getAntdSelectItem } from '../utils/AntdUtils';
 
@@ -152,13 +153,38 @@ const DatasetPanel = (props) => {
         return gestureDataTree;
     }
 
+    const fetchSampleGestureData = () => {
+        const requestOptions = {
+            method: 'POST',
+            header: { 'Content-Type': 'application/zip' }
+        };
+        fetch(serverAddress + '/getsamplegesturedata', requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw Error(response.statusText);
+                }
+                return response.blob();
+            }).then(blob => {
+                saveAs(blob, "sample_gesture_data.zip");
+            }, error => {
+                console.log(error);
+            });
+    }
+
     return (
         <div className='scrollable-div' style={{ padding: '8px' }}>
             <Title level={2} style={{ marginBottom: '0px' }}>Manage Dataset</Title>
 
             {/* Upload Gesture Samples */}
             <Card size='small' style={{ marginTop: '12px', borderBottom: '0px' }}>
-                <Text strong>Upload Gesture Samples</Text>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text strong>Upload Gesture Samples</Text>
+                    <Text>
+                        <Tooltip title='Download Sample Gestures'>
+                            <DownloadOutlined onClick={() => { fetchSampleGestureData(); }} />
+                        </Tooltip>
+                    </Text>
+                </div>
             </Card>
             <Card size='small'>
                 <Space direction={'vertical'} size={8} style={{ display: 'flex' }}>

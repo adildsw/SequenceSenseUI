@@ -1,17 +1,13 @@
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-
-import numpy as np
-
-import time
 
 from backend import classify, analyze_conflict, get_confusion_chart_data
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-IP = '192.168.0.202'
+IP = '192.168.192.39'
 PORT = 3001
 
 @app.route('/')
@@ -24,25 +20,8 @@ def classifyAPI():
     labels = resData['labels']
     files = resData['files']
     data = resData['data']
-    conv(data[files[labels[0]][0]])
     # time.sleep(5) # Simulating processing delay
     return jsonify(classify(labels, files, data))
-
-def conv(data):
-    # print(data)
-    lines = data.split('\n')
-    print(len(lines))
-    d = []
-    for line in lines:
-        dtemp = line.split(',')
-        print(dtemp)
-        if len(dtemp) > 1:
-            for idx, val in enumerate(dtemp):
-                dtemp[idx] = float(val)
-            d.append(dtemp)
-    print(len(d[0]))
-    d_np = np.array(d)
-    print(d_np.shape)
 
 @app.route('/analyzeconflict', methods=['POST'])
 def analyzeAPI():
@@ -57,6 +36,11 @@ def analyzeConfusionAPI():
     predicted_label = resData['predictedLabel']
     # time.sleep(2) # Simulating processing delay
     return jsonify(get_confusion_chart_data(actual_label, predicted_label))
+
+@app.route('/getsamplegesturedata', methods=['GET', 'POST'])
+def getSampleGestureDataAPI():
+    file = send_file('sample_gesture_data.zip', mimetype='application/zip', as_attachment=True)
+    return file
 
 if __name__ == '__main__':
     app.run(host=IP, port=PORT, debug=True)
