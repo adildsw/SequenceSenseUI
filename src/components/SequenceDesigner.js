@@ -10,7 +10,7 @@ import lastShape from '../assets/shapes/shape-last.svg';
 const { Text } = Typography;
 
 const SequenceDesigner = (props) => {
-    const { gestureSequence, setGestureSequence, screenConfig, setSequenceDesignerResizeFunc } = props;
+    const { gestureSequence, setGestureSequence, setConflictData, screenConfig, setSequenceDesignerResizeFunc, serverAddress, setIsFetchingConflictAnalysis } = props;
 
     const [sequenceDesignerDim, setSequenceDesignerDim] = useState([0, 0]);
 
@@ -91,6 +91,27 @@ const SequenceDesigner = (props) => {
         }
         return title;
     }
+
+    const analyzeConflict = () => {
+        setIsFetchingConflictAnalysis(true);
+        const requestOptions = {
+            method: 'POST',
+            header: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'sequence': gestureSequence })
+        };
+        fetch(serverAddress + '/analyzeconflict', requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw Error(response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                setConflictData({ gestureSequence: gestureSequence, chartData: data});
+                setIsFetchingConflictAnalysis(false);
+            });
+    }
     
     return (
         <>
@@ -113,7 +134,7 @@ const SequenceDesigner = (props) => {
             </Card>
             <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <Button disabled={gestureSequence.length === 0} type='danger' style={{ marginRight: '12px' }} onClick={() => { setGestureSequence([]); }}>Clear All</Button>
-                <Tooltip title='Move Atomic Action Left'>
+                {/* <Tooltip title='Move Atomic Action Left'>
                     <Button disabled style={{ borderRight: '0px' }}><LeftOutlined /></Button>
                 </Tooltip>
                 <Tooltip title='Delete Atomic Action'>
@@ -121,11 +142,9 @@ const SequenceDesigner = (props) => {
                 </Tooltip>
                 <Tooltip title='Move Atomic Action Right'>
                     <Button disabled style={{ borderLeft: '0px', marginRight: '12px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}><RightOutlined /></Button>
-                </Tooltip>
-                <Button disabled={gestureSequence.length === 0} style={{ flexGrow: '1', marginRight: '12px' }}><SettingOutlined />Calculate Conflict</Button>
-                <Tooltip title={!screenConfig.xxl && 'Preview Sequence'}>
-                    <Button disabled={gestureSequence.length === 0}><VideoCameraOutlined />{screenConfig.xxl && 'Preview Sequence'}</Button>
-                </Tooltip>
+                </Tooltip> */}
+                <Button disabled={gestureSequence.length === 0} style={{ flexGrow: '1', marginRight: '12px' }} onClick={() => { analyzeConflict(); }}><SettingOutlined />Calculate Conflict</Button>
+                <Button disabled={gestureSequence.length === 0}><VideoCameraOutlined />{'Preview Sequence'}</Button>
             </div>
         </>
     );

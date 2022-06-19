@@ -20,7 +20,7 @@ const { Text } = Typography;
 const MIN_ALLOWED_HEIGHT = 800;
 const MIN_ALLOWED_WIDTH = 1300;
 
-const SERVER_ADDRESS = 'http://192.168.192.39:3001';
+const SERVER_ADDRESS = 'http://192.168.0.140:3001';
 
 const App = () => {
 
@@ -34,6 +34,7 @@ const App = () => {
     const [generatedData, setGeneratedData] = useState({});
     const [gestureSequence, setGestureSequence] = useState([]);
     const [isComponentVisualizationVisible, setIsComponentVisualizationVisible] = useState(false);
+    const [confidenceValue, setConfidenceValue] = useState(0.8);
 
     // Loading Variables
     const [isFetchingClassificationResult, setIsFetchingClassificationResult] = useState(false);
@@ -171,7 +172,10 @@ const App = () => {
                                             setConflictData={setConflictData}
                                             screenConfig={screenConfig}
                                             isComponentVisualizationVisible={isComponentVisualizationVisible}
-                                             setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
+                                            setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
+                                            confidenceValue={confidenceValue}
+                                            setConfidenceValue={setConfidenceValue}
+                                            serverAddress={SERVER_ADDRESS}
                                         />
                                     </Col>
                                     {

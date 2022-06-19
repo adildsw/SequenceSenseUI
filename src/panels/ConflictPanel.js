@@ -1,5 +1,5 @@
 import { DownloadOutlined, InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Image, Row, Select, Space, Typography, Tooltip } from "antd";
+import { Button, Card, Col, Image, Row, Select, Space, Typography, Tooltip, Slider } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine } from "recharts";
 import AtomicAction from "../components/AtomicAction";
@@ -12,7 +12,27 @@ const { Title, Text } = Typography;
 
 const ConflictPanel = (props) => {
 
-    const { gestureData, classifierData, selectedGesture, setSelectedGesture, gestureSequence, setGestureSequence, conflictData, setConflictData, isFetchingConflictAnalysis, setIsFetchingConflictAnalysis, screenConfig, setConflictChartResizeFunc, setSequenceDesignerResizeFunc, setPreviewResizeFunc, isComponentVisualizationVisible, setIsComponentVisualizationVisible } = props;
+    const { 
+        gestureData, 
+        classifierData, 
+        selectedGesture, 
+        setSelectedGesture, 
+        gestureSequence, 
+        setGestureSequence, 
+        conflictData, 
+        setConflictData, 
+        isFetchingConflictAnalysis, 
+        setIsFetchingConflictAnalysis, 
+        screenConfig, 
+        setConflictChartResizeFunc, 
+        setSequenceDesignerResizeFunc, 
+        setPreviewResizeFunc, 
+        isComponentVisualizationVisible, 
+        setIsComponentVisualizationVisible, 
+        confidenceValue, 
+        setConfidenceValue, 
+        serverAddress 
+    } = props;
 
     const [selectedAtomicAction, setSelectedAtomicAction] = useState(null);
 
@@ -59,7 +79,6 @@ const ConflictPanel = (props) => {
         if (gestureData.processed && selectedGesture === '') {
             setSelectedGesture(gestureData.labels[0]);
             setGestureSequence(classifierData.atomicSeq[gestureData.labels[0]]);
-            console.log("triggered");
         }
     }, [gestureData, selectedGesture, setSelectedGesture, setGestureSequence, classifierData]);
 
@@ -77,11 +96,10 @@ const ConflictPanel = (props) => {
     }
 
     const getConflictChartData = (chartType, componentType) => {
-        if (!Object.keys(classifierData).includes('conflictChartData')) return [];
-
-        var chartData = classifierData.conflictChartData;
+        if (!Object.keys(classifierData).includes('avgConflictAnalysis')) return [];
+        var chartData = classifierData.avgConflictAnalysis;
         if (conflictData.gestureSequence.length !== 0)
-            chartData = conflictData.chartData;
+            chartData = conflictData.chartData.avgConflictAnalysis;
         var data = [];
         if (gestureData.processed) {
             for (var idx = 0; idx < chartData.confidence.length; idx++) {
@@ -93,18 +111,22 @@ const ConflictPanel = (props) => {
                 data.push(entry);
             }
         }
+        console.log(data);
         return data;
     }
 
     const getConflictChartLines = () => {
-        if (!Object.keys(classifierData).includes('conflictChartData') || !gestureData.processed) return [];
+        if (!Object.keys(classifierData).includes('avgConflictAnalysis') || !gestureData.processed) return [];
+        var chartData = classifierData.avgConflictAnalysis;
+        if (conflictData.gestureSequence.length !== 0)
+            chartData = conflictData.chartData.avgConflictAnalysis;
 
         var lines = [];
         var lineKeys = [];
         var lineNames = [];
         var lineStrokes = ['#3D9970', '#0074D9', '#FFDC00', '#FF851B', '#FF4136'];
-        for (var item of Object.keys(classifierData.conflictChartData)) {
-            if (item !== 'confidence') lineKeys.push(item);
+        for (var item of Object.keys(chartData)) {
+            if (item !== 'confidence' && item !== 'message' && item !== 'status') lineKeys.push(item);
         }
         for (var key of lineKeys) {
             if (key === 'regular' && lineKeys.length === 2) lineNames.push('Regular Activities');
@@ -140,9 +162,15 @@ const ConflictPanel = (props) => {
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Confidence: ' + Math.round(value * 10000) / 10000}/>
                 <Legend verticalAlign="top" />
                 {lines}
-                <ReferenceLine x={0.9} stroke={'#001f3f'} strokeWidth={2} strokeDasharray={3} />
+                <Line dataKey={'null'} stroke={'#001f3f'} strokeDasharray={3} strokeWidth={2} name={'Confidence Threshold'} />
+                <ReferenceLine x={confidenceValue} stroke={'#001f3f'} strokeWidth={2} strokeDasharray={3} />
             </LineChart>
         );
+    }
+
+    // TODO: Implement
+    const computeAccuracy = () => {
+        return confidenceValue;
     }
 
     return (
@@ -182,7 +210,7 @@ const ConflictPanel = (props) => {
                         </Card>
                     </Col>
                     <Col span={14} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingRight: '6px', paddingLeft: '6px' }}>
-                        <SequenceDesigner gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
+                        <SequenceDesigner serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
                         <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
@@ -201,26 +229,43 @@ const ConflictPanel = (props) => {
                 </Row>
             </Card>
             <Row style={{ flexGrow: '1' }}>
-                <Col xl={16} xxl={18} style={{ height: '100%', paddingRight: '6px' }}>
+                <Col span={14} style={{ height: '100%', paddingRight: '6px' }}>
                     <Card title={'Conflict Analysis'} size='small' style={{ display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', }}>
                         <div ref={conflictChartAreaRef} style={{ flexGrow: '1' }}>
                             { generateConflictChart() }
                         </div>
                     </Card>
                 </Col>
-                <Col xl={8} xxl={6} style={{ height: '100%', paddingLeft: '6px' }}>
-                    <Card size='small' style={{ height: '100%' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
-                        {
-                            isFetchingConflictAnalysis ? // Replace with loading variable
+                <Col span={10} style={{ height: '100%', paddingLeft: '6px', display: 'flex', flexDirection: 'column' }}>
+                    {
+                        isFetchingConflictAnalysis ? // Replace with loading variable
+                        <Card size='small' style={{ height: '100%' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
                             <Space direction={'vertical'} size={8} style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
                                 <LoadingOutlined style={{ fontSize: 24 }} spin />
                                 <Text type={'secondary'}>Fetching conflict analysis...</Text>
-                            </Space> :
-                            <Text type={'secondary'}>
-                                <InfoCircleOutlined /> <b>Tip:</b> Design your gesture sequence and click on <i>Calculate Conflict</i> to visualize the gesture conflicts.
-                            </Text>
-                        }
-                    </Card>
+                            </Space>
+                        </Card> :
+                        <>
+                            <Card title={'Adjust Confidence Threshold'} size='small' style={{ flexGrow: '0', marginBottom: '12px' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
+                                <Space direction={'vertical'} size={8} style={{ width: '100%', height: '100%', display: 'flex' }}>
+                                    <Row>
+                                        <Col span={16} style={{ margin: 'auto' }}>
+                                            <Slider min={0} max={1} step={0.01} marks={{0: '0', 1: '1'}} tipFormatter={(value) => 'Confidence Threshold: ' + value} value={confidenceValue} onChange={(value) => {setConfidenceValue(value); }}/>
+                                        </Col>
+                                        <Col span={8}>
+                                            <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                                <Text strong>Accuracy</Text>
+                                                <Title level={1} style={{ margin: '0' }}>{computeAccuracy()}</Title>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                </Space>
+                            </Card>
+                            <Card title={'Customize Conflict Analysis'} size='small' style={{ flexGrow: '1' }} bodyStyle={{ display: 'flex', height: '100%' }}>
+                                Hello
+                            </Card>
+                        </>
+                    }
                 </Col>
             </Row>
         </div>
