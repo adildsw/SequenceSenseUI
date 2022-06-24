@@ -7,7 +7,7 @@ from backend import classify, analyze_conflict, get_confusion_chart_data
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-IP = '192.168.0.202'
+IP = '192.168.192.39'
 PORT = 3001
 
 @app.route('/')

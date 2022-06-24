@@ -1,12 +1,13 @@
-import { DownloadOutlined, InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Image, Row, Select, Space, Typography, Tooltip, Slider } from "antd";
-import { useCallback, useEffect, useState } from "react";
-import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine } from "recharts";
-import AtomicAction from "../components/AtomicAction";
-import SequenceDesigner from "../components/SequenceDesigner";
-import { getAnim } from "../utils/AnimUtils";
+import { DownloadOutlined, InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Image, Row, Select, Space, Typography, Slider, List, Divider, Switch } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine, Tooltip } from 'recharts';
+import randomColor from 'randomcolor';
 
-import { getAntdSelectItem } from "../utils/AntdUtils";
+import AtomicAction from '../components/AtomicAction';
+import SequenceDesigner from '../components/SequenceDesigner';
+import { getAnim } from '../utils/AnimUtils';
+import { getAntdSelectItem } from '../utils/AntdUtils';
 
 const { Title, Text } = Typography;
 
@@ -15,6 +16,7 @@ const ConflictPanel = (props) => {
     const { 
         gestureData, 
         classifierData, 
+        setClassifierData,
         selectedGesture, 
         setSelectedGesture, 
         gestureSequence, 
@@ -31,10 +33,13 @@ const ConflictPanel = (props) => {
         setIsComponentVisualizationVisible, 
         confidenceValue, 
         setConfidenceValue, 
-        serverAddress 
+        serverAddress
     } = props;
 
     const [selectedAtomicAction, setSelectedAtomicAction] = useState(null);
+    const [aggregateVisualization, setAggregateVisualization] = useState(true);
+    const [specificGestureVisualization, setSpecificGestureVisualization] = useState({});
+    const [specificGestureVisualizationColors, setSpecificGestureVisualizationColors] = useState({});
 
     const [conflictChartDim, setConflictChartDim] = useState([0, 0]);
     const [previewDim, setPreviewDim] = useState([0, 0]);
@@ -42,6 +47,19 @@ const ConflictPanel = (props) => {
     useEffect(() => {
         window.dispatchEvent(new Event('resize'));
     }, [isComponentVisualizationVisible]);
+
+    useEffect(() => {
+        var gestureVisualization = {};
+        var gestureVisualizationColors = {};
+        for (var gesture of gestureData.labels) {
+            gestureVisualization[gesture] = true;
+            gestureVisualizationColors[gesture] = randomColor({ luminosity: 'dark' });
+        }
+        gestureVisualization['custom_seq'] = true;
+        gestureVisualizationColors['custom_seq'] = randomColor({ luminosity: 'dark' });
+        setSpecificGestureVisualization(gestureVisualization);
+        setSpecificGestureVisualizationColors(gestureVisualizationColors);
+    }, [gestureData]);
 
     const conflictChartAreaRef = useCallback(node => {
         if (node !== null) {
@@ -84,6 +102,26 @@ const ConflictPanel = (props) => {
 
     const gestureSelectOptions = gestureData.labels.map(gesture => getAntdSelectItem(gesture, gesture));
 
+    const initiateExport = () => {
+        const requestOptions = {
+            method: 'POST',
+            header: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'confidence': confidenceValue })
+        };
+        fetch(serverAddress + '/generatereport', requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw Error(response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+            }, error => {
+                console.log(error);
+            });
+    }
+
     const generateAtomicActionSelectors = () => {
         var atomicActions = [];
         var atomicActionNames = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'a11', 'a12', 'a13', 'a14', 'aw1', 'aw2', 'aw3', 'aw4'];
@@ -95,50 +133,82 @@ const ConflictPanel = (props) => {
         return atomicActions;
     }
 
-    const getConflictChartData = (chartType, componentType) => {
+    const getConflictChartData = () => {
         if (!Object.keys(classifierData).includes('avgConflictAnalysis')) return [];
-        var chartData = classifierData.avgConflictAnalysis;
-        if (conflictData.gestureSequence.length !== 0)
-            chartData = conflictData.chartData.avgConflictAnalysis;
+        if (!Object.keys(classifierData).includes('conflictAnalysis')) return [];
+
         var data = [];
-        if (gestureData.processed) {
-            for (var idx = 0; idx < chartData.confidence.length; idx++) {
-                var entry = {
-                    confidence: chartData.confidence[idx],
-                    regular: chartData.regular[idx],
-                    gesture: chartData.gesture[idx]
-                };
-                data.push(entry);
+        var chartData = classifierData.conflictAnalysis;
+        var avgChartData = classifierData.avgConflictAnalysis;
+        for (var idx = 0; idx < avgChartData.confidence.length; idx++) {
+            var entry = {
+                confidence: avgChartData.confidence[idx],
+                avgRegular: avgChartData.regular[idx],
+                avgGesture: avgChartData.gesture[idx],
+                specificGestureAvg: 0,
+                specificRegularAvg: 0
+            };
+            var count = 0;
+            for (var gesture of Object.keys(chartData)) {
+                entry[gesture + 'Regular'] = chartData[gesture].regular[idx];
+                entry[gesture + 'Gesture'] = chartData[gesture].gesture[idx];
+                if (specificGestureVisualization[gesture]) {
+                    entry['specificRegularAvg'] += chartData[gesture].regular[idx];
+                    entry['specificGestureAvg'] += chartData[gesture].gesture[idx];
+                    count++;
+                }
             }
+            if (count > 0) {
+                entry['specificRegularAvg'] /= count;
+                entry['specificGestureAvg'] /= count;
+            }
+            data.push(entry);
         }
-        console.log(data);
         return data;
     }
 
     const getConflictChartLines = () => {
-        if (!Object.keys(classifierData).includes('avgConflictAnalysis') || !gestureData.processed) return [];
-        var chartData = classifierData.avgConflictAnalysis;
-        if (conflictData.gestureSequence.length !== 0)
-            chartData = conflictData.chartData.avgConflictAnalysis;
+        if (!Object.keys(classifierData).includes('avgConflictAnalysis')) return [];
+        if (!Object.keys(classifierData).includes('conflictAnalysis')) return [];
 
         var lines = [];
-        var lineKeys = [];
-        var lineNames = [];
-        var lineStrokes = ['#3D9970', '#0074D9', '#FFDC00', '#FF851B', '#FF4136'];
-        for (var item of Object.keys(chartData)) {
-            if (item !== 'confidence' && item !== 'message' && item !== 'status') lineKeys.push(item);
-        }
-        for (var key of lineKeys) {
-            if (key === 'regular' && lineKeys.length === 2) lineNames.push('Regular Activities');
-            else if (key === 'regular' && lineKeys.length > 2) lineNames.push('Regular Activities (Exact Match)');
-            else if (key === 'gesture') lineNames.push('Gestures');
-            else if (key.startsWith('hamming')) lineNames.push('Regular Activities (Hamming Distance: ' + key.substring(7) + ')');
-        }
-
-        for (var idx = 0; idx < lineKeys.length; idx++) {
+        if (aggregateVisualization) {
             lines.push(
-                <Line key={idx} isAnimationActive={false} type='monotone' dataKey={lineKeys[idx]} name={lineNames[idx]} stroke={lineStrokes[idx]} dot={false} />
+                <Legend 
+                    key={'average'}
+                    verticalAlign='top' 
+                    payload={[
+                        { color:'#3D9970', value: 'Gestures', type: 'plainline', payload: { strokeDasharray: '0 0' }, id: 'avgRegular' }, 
+                        { color:'#0074D9', value: 'Regular Activities', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }, 
+                        { color:'#FF4136', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
+                    ]} 
+                />,
+                <Line key={'specificGestureAvg'} isAnimationActive={false} type='monotone' dataKey={'specificGestureAvg'} name={'Gestures'} stroke={'#3D9970'} dot={false} />,
+                <Line key={'specificRegularAvg'} isAnimationActive={false} type='monotone' dataKey={'specificRegularAvg'} name={'Regular Activities'} stroke={'#0074D9'} strokeDasharray={3} dot={false} />
             );
+        }
+        else {
+            lines.push(
+                <Legend 
+                    key={'average'}
+                    verticalAlign='top' 
+                    payload={[
+                        { color:'#000', value: 'Gestures', type: 'plainline', payload: { strokeDasharray: '0 0' }, id: 'avgRegular' }, 
+                        { color:'#000', value: 'Regular Activities', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }, 
+                        { color:'#FF4136', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
+                    ]} 
+                />
+            );
+            for (var gesture of Object.keys(specificGestureVisualization)) {
+                if (specificGestureVisualization[gesture]) {
+                    console.log(gesture);
+                    lines.push(
+                        <Line key={gesture + 'Gesture'} isAnimationActive={false} type='monotone' dataKey={gesture + 'Gesture'} stroke={specificGestureVisualizationColors[gesture]} name={gesture + ' (Gesture)'} dot={false} />,
+                        <Line key={gesture + 'Regular'} isAnimationActive={false} type='monotone' dataKey={gesture + 'Regular'} stroke={specificGestureVisualizationColors[gesture]} name={gesture + ' (Regular Activities)'} strokeDasharray={3} dot={false} />
+                    );
+                }
+            }
+            console.log(lines);
         }
         return lines;
     }
@@ -160,17 +230,45 @@ const ConflictPanel = (props) => {
                     <Label value={'Detection Rate'} angle={-90} offset={-5} style={{ marginRight: '100px'}} />
                 </YAxis>
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Confidence: ' + Math.round(value * 10000) / 10000}/>
-                <Legend verticalAlign="top" />
                 {lines}
-                <Line dataKey={'null'} stroke={'#001f3f'} strokeDasharray={3} strokeWidth={2} name={'Confidence Threshold'} />
-                <ReferenceLine x={confidenceValue} stroke={'#001f3f'} strokeWidth={2} strokeDasharray={3} />
+                <ReferenceLine x={confidenceValue} stroke={'#FF4136'} strokeWidth={2} strokeDasharray={3} />
             </LineChart>
         );
     }
 
-    // TODO: Implement
+    const generateConflictConfigurationList = () => {
+        var list = [];
+        gestureData.labels.forEach(item => {
+            list.push(
+                <List.Item key={item} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text>{item}</Text>
+                    <Switch checked={specificGestureVisualization[item]} onChange={(value) => { setSpecificGestureVisualization({...specificGestureVisualization, [item]: value}); }} />
+                </List.Item>
+            );
+        });
+        if (classifierData.gestureSequence.length > 0) {
+            list.push(
+                <List.Item key={'Custom Sequence'} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text>{'Custom Sequence [' + classifierData.gestureSequence.join('-') + ']'}</Text>
+                    <Switch checked={specificGestureVisualization['custom_seq']} onChange={(value) => { setSpecificGestureVisualization({...specificGestureVisualization, 'custom_seq': value}); }} />
+                </List.Item>
+            );
+        }
+        return list;
+    }
+
     const computeAccuracy = () => {
-        return confidenceValue;
+        var data = getConflictChartData();
+        console.log(data);
+        var min = 999;
+        for (var idx = 0; idx < data.length; idx++) {
+            if (Math.abs(confidenceValue - data[idx].confidence) < min) {
+                min = Math.abs(confidenceValue - data[idx].confidence);
+                var gestureVal = data[idx].specificGestureAvg;
+                var regularVal = data[idx].specificRegularAvg;
+            }
+        }
+        return (Math.round((gestureVal - regularVal) * 10000) / 100).toFixed(2) + '%';
     }
 
     return (
@@ -197,7 +295,7 @@ const ConflictPanel = (props) => {
                             onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); console.log(classifierData.atomicSeq); }}
                         />
                     </Space>
-                    <Button><DownloadOutlined />Export Recognizer</Button>
+                    <Button onClick={() => { initiateExport(); }}><DownloadOutlined />Export Recognizer</Button>
                 </Space>
             </Card>
             <Card size='small' style={{ marginBottom: '12px' }} bodyStyle={{ display: 'flex', width: '100%' }}>
@@ -210,7 +308,7 @@ const ConflictPanel = (props) => {
                         </Card>
                     </Col>
                     <Col span={14} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingRight: '6px', paddingLeft: '6px' }}>
-                        <SequenceDesigner serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
+                        <SequenceDesigner classifierData={classifierData} setClassifierData={setClassifierData} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
                         <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
@@ -230,8 +328,8 @@ const ConflictPanel = (props) => {
             </Card>
             <Row style={{ flexGrow: '1' }}>
                 <Col span={14} style={{ height: '100%', paddingRight: '6px' }}>
-                    <Card title={'Conflict Analysis'} size='small' style={{ display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', }}>
-                        <div ref={conflictChartAreaRef} style={{ flexGrow: '1' }}>
+                    <Card title={'Conflict Analysis'} size='small' style={{ display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', padding: 0}}>
+                        <div ref={conflictChartAreaRef} style={{ flexGrow: '1', paddingTop: '8px' }}>
                             { generateConflictChart() }
                         </div>
                     </Card>
@@ -246,23 +344,31 @@ const ConflictPanel = (props) => {
                             </Space>
                         </Card> :
                         <>
-                            <Card title={'Adjust Confidence Threshold'} size='small' style={{ flexGrow: '0', marginBottom: '12px' }} bodyStyle={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'justify' }}>
-                                <Space direction={'vertical'} size={8} style={{ width: '100%', height: '100%', display: 'flex' }}>
+                            <Card title={'Configure Conflict Analysis Visualization'} size='small' style={{ display: 'flex', flexDirection: 'column', flexGrow: '1' }} bodyStyle={{ display: 'flex', flexDirection: 'column', height: conflictChartDim[1] + 'px' }}>
+                                <Space direction={'vertical'} size={8} style={{ width: '100%', display: 'flex' }}>
                                     <Row>
                                         <Col span={16} style={{ margin: 'auto' }}>
-                                            <Slider min={0} max={1} step={0.01} marks={{0: '0', 1: '1'}} tipFormatter={(value) => 'Confidence Threshold: ' + value} value={confidenceValue} onChange={(value) => {setConfidenceValue(value); }}/>
+                                            <Slider min={0} max={1} step={0.05} marks={{0: '0', 1: '1'}} tipFormatter={(value) => 'Confidence Threshold: ' + value} value={confidenceValue} onChange={(value) => {setConfidenceValue(value); }}/>
                                         </Col>
                                         <Col span={8}>
                                             <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                                 <Text strong>Accuracy</Text>
-                                                <Title level={1} style={{ margin: '0' }}>{computeAccuracy()}</Title>
+                                                <Title level={3} style={{ margin: '0' }}>{computeAccuracy()}</Title>
                                             </div>
                                         </Col>
                                     </Row>
                                 </Space>
-                            </Card>
-                            <Card title={'Customize Conflict Analysis'} size='small' style={{ flexGrow: '1' }} bodyStyle={{ display: 'flex', height: '100%' }}>
-                                Hello
+                                
+                                <Divider style={{ margin: '0', marginTop: '8px' }} />
+                                <List bordered>
+                                    <List.Item style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', background: '#f0f0f0' }}>
+                                        <Text strong>Aggregate Results</Text>
+                                        <Switch defaultChecked={aggregateVisualization} checked={aggregateVisualization} onChange={(value) => { setAggregateVisualization(value); }} />
+                                    </List.Item>
+                                </List>
+                                <List bordered style={{ borderTop: 0, overflowY: 'auto', flexGrow: '1' }}>
+                                    {generateConflictConfigurationList()}
+                                </List>
                             </Card>
                         </>
                     }

@@ -20,14 +20,13 @@ const { Text } = Typography;
 const MIN_ALLOWED_HEIGHT = 800;
 const MIN_ALLOWED_WIDTH = 1300;
 
-const SERVER_ADDRESS = 'http://192.168.0.140:3001';
+const SERVER_ADDRESS = 'http://192.168.192.39:3001';
 
 const App = () => {
-
     const [menuSelection, setMenuSelection] = useState('dataset');
     const [gestureData, setGestureData] = useState({processed: false, labels: [], files: {}, data: {}});
     const [classifierData, setClassifierData] = useState({});
-    const [conflictData, setConflictData] = useState({ gestureSequence: '', chartData: [] })
+    const [conflictData, setConflictData] = useState({ gestureSequence: [], chartData: {} })
     const [selectedClassification, setSelectedClassification] = useState({ actualIdx: -1, predictedIdx: -1, actual: {}, predicted: {} });
     const [isVisualizationChartIsolated, setIsVisualizationChartIsolated] = useState(true);
     const [selectedGesture, setSelectedGesture] = useState('');
@@ -159,6 +158,7 @@ const App = () => {
                                         <ConflictPanel 
                                             gestureData={gestureData}
                                             classifierData={classifierData}
+                                            setClassifierData={setClassifierData}
                                             selectedGesture={selectedGesture}
                                             setSelectedGesture={setSelectedGesture} 
                                             gestureSequence={gestureSequence}

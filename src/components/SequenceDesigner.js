@@ -10,7 +10,7 @@ import lastShape from '../assets/shapes/shape-last.svg';
 const { Text } = Typography;
 
 const SequenceDesigner = (props) => {
-    const { gestureSequence, setGestureSequence, setConflictData, screenConfig, setSequenceDesignerResizeFunc, serverAddress, setIsFetchingConflictAnalysis } = props;
+    const { gestureSequence, setGestureSequence, classifierData, setClassifierData, setConflictData, screenConfig, setSequenceDesignerResizeFunc, serverAddress, setIsFetchingConflictAnalysis } = props;
 
     const [sequenceDesignerDim, setSequenceDesignerDim] = useState([0, 0]);
 
@@ -34,8 +34,9 @@ const SequenceDesigner = (props) => {
         accept: 'atomic-action', 
         drop: (item) => {
             setGestureSequence(prevState => {
-                if (prevState.length < 8) prevState.push(item.type);
-                return prevState;
+                const newGestureSequence = [...prevState];
+                if (prevState.length < 8) newGestureSequence.push(item.type);
+                return newGestureSequence;
             })
             return {'droppedOn': gestureSequence};
         },
@@ -107,9 +108,26 @@ const SequenceDesigner = (props) => {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
                 setConflictData({ gestureSequence: gestureSequence, chartData: data});
+                var newClassifierData = { ...classifierData };
+                newClassifierData.gestureSequence = gestureSequence;
+                newClassifierData['avgConflictAnalysis'] = data['avgConflictAnalysis'];
+                newClassifierData['conflictAnalysis']['custom_seq'] = data['conflictAnalysis']['custom_seq'];
+                setClassifierData(prevState => {
+                    console.log(prevState);
+                    console.log(newClassifierData);
+                    return newClassifierData
+                });
                 setIsFetchingConflictAnalysis(false);
+            }, error => {
+                console.log(error);
+                setIsFetchingConflictAnalysis(false);
+                setConflictData({ gestureSequence: [], chartData: {}})
+                setClassifierData(prevState => {
+                    var newClassifierData = { ...prevState };
+                    newClassifierData.gestureSequence = [];
+                    return newClassifierData;
+                });
             });
     }
     

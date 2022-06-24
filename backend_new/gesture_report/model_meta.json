@@ -1,0 +1,8 @@
+{
+    "name": "K-Nearest Neighbors",
+    "input_dimension": "400 samples (2 seconds) x 6 features",
+    "features": "3D distance and 3D orientation",
+    "k": "5",
+    "similarity_measure": "Dynamic Time Warping (DTW)",
+    "library": "Tslearn"
+}

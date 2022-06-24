@@ -118,7 +118,9 @@ const DatasetPanel = (props) => {
                 setGestureData(prevState => {
                     return {...prevState, 'processed': true};
                 });
-                setClassifierData(data);
+                var newClassifierData = data;
+                newClassifierData['gestureSequence'] = [];
+                setClassifierData(newClassifierData);
                 console.log(data);
                 if (data.accuracy > 0.8)
                     message.success('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
