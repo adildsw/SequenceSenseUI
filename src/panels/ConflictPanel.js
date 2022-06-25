@@ -259,7 +259,6 @@ const ConflictPanel = (props) => {
 
     const computeAccuracy = () => {
         var data = getConflictChartData();
-        console.log(data);
         var min = 999;
         for (var idx = 0; idx < data.length; idx++) {
             if (Math.abs(confidenceValue - data[idx].confidence) < min) {

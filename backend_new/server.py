@@ -7,7 +7,7 @@ from backend import classify, analyze_conflict, get_confusion_chart_data, genera
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-IP = '192.168.192.39'
+IP = '127.0.0.1'
 PORT = 3001
 
 @app.route('/')
@@ -50,4 +50,4 @@ def generateReportAPI():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(host=IP, port=PORT, debug=True)
+    app.run(host=IP, port=PORT, debug=False)
