@@ -3,6 +3,7 @@ import { Button, Card, Col, Image, Row, Select, Space, Typography, Slider, List,
 import { useCallback, useEffect, useState } from 'react';
 import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine, Tooltip } from 'recharts';
 import randomColor from 'randomcolor';
+import { saveAs } from 'file-saver';
 
 import AtomicAction from '../components/AtomicAction';
 import SequenceDesigner from '../components/SequenceDesigner';
@@ -105,7 +106,7 @@ const ConflictPanel = (props) => {
     const initiateExport = () => {
         const requestOptions = {
             method: 'POST',
-            header: { 'Content-Type': 'application/json' },
+            header: { 'Content-Type': 'application/zip' },
             body: JSON.stringify({ 'confidence': confidenceValue })
         };
         fetch(serverAddress + '/generatereport', requestOptions)
@@ -113,10 +114,9 @@ const ConflictPanel = (props) => {
                 if (!response.ok) {
                     throw Error(response.statusText);
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
+                return response.blob();
+            }).then(blob => {
+                saveAs(blob, "sequencesense_export_" + Date.now() + ".zip");
             }, error => {
                 console.log(error);
             });
@@ -257,7 +257,7 @@ const ConflictPanel = (props) => {
         return list;
     }
 
-    const computeAccuracy = () => {
+    const computeAccuracy = (accuracyType) => {
         var data = getConflictChartData();
         var min = 999;
         for (var idx = 0; idx < data.length; idx++) {
@@ -267,7 +267,9 @@ const ConflictPanel = (props) => {
                 var regularVal = data[idx].specificRegularAvg;
             }
         }
-        return (Math.round((gestureVal - regularVal) * 10000) / 100).toFixed(2) + '%';
+        if (accuracyType === 'regular')
+            return Math.round(regularVal * 100) + '%';
+        return Math.round(gestureVal * 100) + '%';
     }
 
     return (
@@ -307,7 +309,7 @@ const ConflictPanel = (props) => {
                         </Card>
                     </Col>
                     <Col span={14} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingRight: '6px', paddingLeft: '6px' }}>
-                        <SequenceDesigner classifierData={classifierData} setClassifierData={setClassifierData} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
+                        <SequenceDesigner selectedGesture={selectedGesture} setSpecificGestureVisualization={setSpecificGestureVisualization} classifierData={classifierData} setClassifierData={setClassifierData} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
                         <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
@@ -346,13 +348,19 @@ const ConflictPanel = (props) => {
                             <Card title={'Configure Conflict Analysis Visualization'} size='small' style={{ display: 'flex', flexDirection: 'column', flexGrow: '1' }} bodyStyle={{ display: 'flex', flexDirection: 'column', height: conflictChartDim[1] + 'px' }}>
                                 <Space direction={'vertical'} size={8} style={{ width: '100%', display: 'flex' }}>
                                     <Row>
-                                        <Col span={16} style={{ margin: 'auto' }}>
+                                        <Col span={10} style={{ margin: 'auto' }}>
                                             <Slider min={0} max={1} step={0.05} marks={{0: '0', 1: '1'}} tipFormatter={(value) => 'Confidence Threshold: ' + value} value={confidenceValue} onChange={(value) => {setConfidenceValue(value); }}/>
                                         </Col>
-                                        <Col span={8}>
+                                        <Col span={7}>
                                             <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                                <Text strong>Accuracy</Text>
-                                                <Title level={3} style={{ margin: '0' }}>{computeAccuracy()}</Title>
+                                                <Text strong>Gesture Accuracy</Text>
+                                                <Title level={3} style={{ margin: '0' }}>{computeAccuracy('accuracy')}</Title>
+                                            </div>
+                                        </Col>
+                                        <Col span={7}>
+                                            <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                                <Text strong>False Activations</Text>
+                                                <Title level={3} style={{ margin: '0' }}>{computeAccuracy('regular')}</Title>
                                             </div>
                                         </Col>
                                     </Row>

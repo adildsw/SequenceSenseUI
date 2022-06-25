@@ -90,6 +90,10 @@ const ComponentVisualizationPanel = (props) => {
         var width = componentChartDim[0] * 0.95;
         var height = componentChartDim[1] * 0.95;
         var minTickGap = 50;
+        var domain = [-0.5, 0.5];
+        if (chartType === 'orientation') {
+            domain = [-110, 110];
+        }
 
         var yAxisLabel = componentType.charAt(0).toUpperCase() + componentType.slice(1);
         if (chartType === 'distance') {
@@ -105,7 +109,7 @@ const ComponentVisualizationPanel = (props) => {
                 <XAxis dataKey='sample' minTickGap={minTickGap} tick={false}>
                     <Label value='Sample' />
                 </XAxis>
-                <YAxis minTickGap={minTickGap} tick={false}>
+                <YAxis minTickGap={minTickGap} tick={true} ticks={domain} type='number' domain={domain}>
                     <Label value={yAxisLabel} angle={-90} />
                 </YAxis>
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Sample: ' + value}/>
@@ -165,22 +169,27 @@ const ComponentVisualizationPanel = (props) => {
 
         var xAxisDataKey = 'y';
         var yAxisDataKey = 'x';
-        var xAxisLabel = 'Y-Distance';
-        var yAxisLabel = 'X-Distance';
+        var xAxisLabel = 'Y-Distance (m)';
+        var yAxisLabel = 'X-Distance (m)';
         if (chartType === 'orientation') {
             xAxisDataKey = 'pitch';
             yAxisDataKey = 'yaw';
-            xAxisLabel = 'Pitch-Angle';
-            yAxisLabel = 'Yaw-Angle';
+            xAxisLabel = 'Pitch-Angle (degree)';
+            yAxisLabel = 'Yaw-Angle (degree)';
         }
+        var domain = [-0.5, 0.5];
+        if (chartType === 'orientation') {
+            domain = [-110, 110];
+        }
+
         
         return (
             <LineChart width={width} height={height} data={getComponentChartMiscData(chartType)} margin={{ top: 5, bottom: 5, right: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey={xAxisDataKey} minTickGap={minTickGap} tick={false} type='number'>
+                <XAxis dataKey={xAxisDataKey} minTickGap={minTickGap} tick={true} ticks={domain} type='number' domain={domain}>
                     <Label value={xAxisLabel} />
                 </XAxis>
-                <YAxis minTickGap={minTickGap} tick={false} type='number'>
+                <YAxis minTickGap={minTickGap} tick={true} ticks={domain} type='number' domain={domain}>
                     <Label value={yAxisLabel} angle={-90} />
                 </YAxis>
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => xAxisLabel + ': ' + value}/>

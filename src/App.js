@@ -20,7 +20,7 @@ const { Text } = Typography;
 const MIN_ALLOWED_HEIGHT = 800;
 const MIN_ALLOWED_WIDTH = 1300;
 
-const SERVER_ADDRESS = 'http://127.0.0.1:3001';
+const SERVER_ADDRESS = 'http://192.168.0.140:3001';
 
 const App = () => {
     const [menuSelection, setMenuSelection] = useState('dataset');
