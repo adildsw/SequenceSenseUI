@@ -34,6 +34,7 @@ const App = () => {
     const [gestureSequence, setGestureSequence] = useState([]);
     const [isComponentVisualizationVisible, setIsComponentVisualizationVisible] = useState(false);
     const [confidenceValue, setConfidenceValue] = useState(0.8);
+    const [isSequencePreviewing, setIsSequencePreviewing] = useState(false);
 
     // Loading Variables
     const [isFetchingClassificationResult, setIsFetchingClassificationResult] = useState(false);
@@ -175,6 +176,8 @@ const App = () => {
                                             setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
                                             confidenceValue={confidenceValue}
                                             setConfidenceValue={setConfidenceValue}
+                                            isSequencePreviewing={isSequencePreviewing} 
+                                            setIsSequencePreviewing={setIsSequencePreviewing}
                                             serverAddress={SERVER_ADDRESS}
                                         />
                                     </Col>

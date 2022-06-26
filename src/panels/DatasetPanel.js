@@ -115,20 +115,36 @@ const DatasetPanel = (props) => {
                 return response.json();
             })
             .then(data => {
-                setGestureData(prevState => {
-                    return {...prevState, 'processed': true};
-                });
-                var newClassifierData = data;
-                newClassifierData['gestureSequence'] = [];
-                setClassifierData(newClassifierData);
-                console.log(data);
-                if (data.accuracy > 0.8)
-                    message.success('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
-                else if (data.accuracy > 0.5)
-                    message.warning('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
-                else
-                    message.error('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
-                setIsFetchingClassificationResult(false);
+                if (!Object.keys(data).includes('status')) {
+                    message.error('Error: Invalid response from server.')
+                    setGestureData(prevState => {
+                        return {...prevState, 'processed': false};
+                    });
+                    setIsFetchingClassificationResult(false);
+                }
+                else if (data.status !== 'Ok') {
+                    message.error('Error: ' + data.message);
+                    setGestureData(prevState => {
+                        return {...prevState, 'processed': false};
+                    });
+                    setIsFetchingClassificationResult(false);
+                }
+                else {
+                    setGestureData(prevState => {
+                        return {...prevState, 'processed': true};
+                    });
+                    var newClassifierData = data;
+                    newClassifierData['gestureSequence'] = [];
+                    setClassifierData(newClassifierData);
+                    console.log(data);
+                    if (data.accuracy > 0.8)
+                        message.success('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
+                    else if (data.accuracy > 0.5)
+                        message.warning('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
+                    else
+                        message.error('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
+                    setIsFetchingClassificationResult(false);
+                }
             }, error => {
                 console.log(error);
                 setGestureData(prevState => {

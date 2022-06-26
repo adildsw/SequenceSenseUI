@@ -3,9 +3,11 @@ import numpy as np
 from torch import float32
 from dummy_data_generator import get_concat_data, get_single_data, get_overlap_data, get_confusion_matrix, get_conflict_analysis_data
 from preprocess_data import *
+import preprocess_data
 import os
 import joblib
 import json
+import shutil
 
 
 gestureList = ['Jump', 'Run in place', 'A step to the side', 'Turn left', 'Turn right', 'A step forward', 'A step backward',
@@ -101,6 +103,33 @@ avg_conflict_analysis_result = {}
 confidence_list_global = None
 count_list_actual_global = None
 
+def cleanupState():
+    global reverse_sequence_map, uploaded_files, uploaded_files_list, saved_processed_data
+    global saved_processed_data_index_map, processedDataUnknown, processedDataUnknownIndexMap
+    global uploadedFilesUnknown, uploadedFilesListUnknown, data_combined, right_pred, wrong_pred
+    global final_labels, conflict_analysis_result, avg_conflict_analysis_result, confidence_list_global, count_list_actual_global
+
+    reverse_sequence_map = {}
+    uploaded_files = {""}
+    uploaded_files_list = []
+    saved_processed_data = []
+    saved_processed_data_index_map = {}
+    processedDataUnknown = []
+    processedDataUnknownIndexMap = {}
+    uploadedFilesUnknown = {""}
+    uploadedFilesListUnknown = []
+    data_combined = None
+    right_pred = None
+    wrong_pred = None
+    final_labels = None
+
+    conflict_analysis_result = {}
+    avg_conflict_analysis_result = {}
+
+    confidence_list_global = None
+    count_list_actual_global = None
+
+
 # global variables for conflict analysis
 regular_activites_data = np.load("./data/regular_details_all.npy", allow_pickle=True)
 stringList = []
@@ -115,10 +144,12 @@ for j in range(len(regular_activites_data)): #len(regular_activites_data)
 def classify(labels: list, files: dict, data: dict):
     '''
     Code for classifying gesture samples.
+
     Parameters
     labels (list): list of gesture labels
     files (dict): dictionary containing files for each gesture
     data (dict): dictionary containing data for each file
+
     Returns
     dict: dictionary containing chart data (timestamp, raw, postprocess, velocity, distance, and orientation) for each gesture label
     Example -> {
@@ -199,6 +230,7 @@ def classify(labels: list, files: dict, data: dict):
             }
         }
     }
+
     '''
     # iterate through each gesture label
     for label in labels:
@@ -261,12 +293,14 @@ def classify(labels: list, files: dict, data: dict):
     global confidence_list_global
     global count_list_actual_global
     global data_combined, right_pred, wrong_pred
+    global y_pred_prob_global, newSeqDic
     if(len(saved_processed_data) > 0):
         confusion, true_labels, predicted_labels, data_combined, right_pred, wrong_pred, accuracy_s, y_pred_prob = classifyUploadedGestures(saved_processed_data)
         predicted_labels = np.append(true_labels, predicted_labels)
         print("new seq disc: ", len(newSeqDic))  
 
         if(len(newSeqDic)>0):
+            print(y_pred_prob.shape, preprocess_data.y_pred_prob_global.shape)
             y_pred_prob = np.vstack((y_pred_prob, preprocess_data.y_pred_prob_global))
             confidence_list_global, count_list_actual_global = calculateGestureAcc(y_pred_prob)
             if(len(newSeqDic)>0):
@@ -302,6 +336,7 @@ def classify(labels: list, files: dict, data: dict):
     # generate uniquie labels
     unique_labels = np.unique(predicted_labels)
     output_labels = []
+    global gestureList
     for i in unique_labels:
         output_labels.append(gestureList[i - 1])
 
@@ -347,7 +382,8 @@ def classify(labels: list, files: dict, data: dict):
 
 
 def get_avg_conflict_analysis_result():
-    avg_conflict_analysis_result = {}
+    global conflict_analysis_result
+    analysis_result = {}
     regular = None
     gesture = None
     confidence = None
@@ -368,17 +404,18 @@ def get_avg_conflict_analysis_result():
         regular /= count
         gesture /= count
     
-    avg_conflict_analysis_result['regular'] = np.ndarray.tolist(regular.flatten())
-    avg_conflict_analysis_result['gesture'] = np.ndarray.tolist(gesture.flatten())
-    avg_conflict_analysis_result['confidence'] = confidence
-    avg_conflict_analysis_result['status'] = "OKAY"
-    avg_conflict_analysis_result['message'] = "Average conflict analysis result"
-    return avg_conflict_analysis_result
+    analysis_result['regular'] = np.ndarray.tolist(regular.flatten())
+    analysis_result['gesture'] = np.ndarray.tolist(gesture.flatten())
+    analysis_result['confidence'] = confidence
+    analysis_result['status'] = "OKAY"
+    analysis_result['message'] = "Average conflict analysis result"
+    return analysis_result
 
 
             
 
 def get_atomic_sequence(labels):
+    global gestureMap, processedDataUnknown, processedDataUnknownIndexMap
     sequence = [
         "a0 a1",
         "a0 a2 a0 a2",
@@ -413,6 +450,7 @@ def get_atomic_sequence(labels):
     return sequence_map
 
 def get_seq_report():
+    global processedDataUnknown, uploadedFilesListUnknown
     size = len(processedDataUnknown)
     string = ""
     for i in range(size):
@@ -475,6 +513,7 @@ def get_concat_gestures(processed_data, processed_data_index_map):
    
 
 def get_concat_data():
+    global saved_processed_data, saved_processed_data_index_map, processedDataUnknown, processedDataUnknownIndexMap
     gestures_known =  get_concat_gestures(saved_processed_data, saved_processed_data_index_map)
     gestures_unknown =  get_concat_gestures(processedDataUnknown, processedDataUnknownIndexMap)
     
@@ -489,6 +528,7 @@ def get_concat_data():
     return gestures
 
 def get_overlap_data():
+    global saved_processed_data, saved_processed_data_index_map, processedDataUnknown, processedDataUnknownIndexMap
     gestures_known =  get_overlap_gestures_known(saved_processed_data, saved_processed_data_index_map)
     gestures_unknown =  get_overlap_gestures_unknown(processedDataUnknown, processedDataUnknownIndexMap)
 
@@ -563,66 +603,68 @@ def get_overlap_gestures_known(processed_data, processed_data_index_map):
 
     
 
-def get_single_data(data_combined, right_pred, wrong_pred):
-    gestures_known =  get_single_gestures(saved_processed_data, saved_processed_data_index_map)
-    gestures_unknown =  get_single_gestures(processedDataUnknown, processedDataUnknownIndexMap)
+# def get_single_data(data_combined, right_pred, wrong_pred):
+#     gestures_known =  get_single_gestures(saved_processed_data, saved_processed_data_index_map)
+#     gestures_unknown =  get_single_gestures(processedDataUnknown, processedDataUnknownIndexMap)
     
-    # merge two dictionaries
-    gestures = {**gestures_known, **gestures_unknown}
+#     # merge two dictionaries
+#     gestures = {**gestures_known, **gestures_unknown}
 
-    return gestures
+#     return gestures
 
 def calculateSeqAccuracy():
-        total = 0
-        total_matched = 0
-        matched_list = []
-        not_matched_list = []
-        predicted_labels = []
-        confusion = None
-        for key, value in newLabelDic.items():
-            print("key: ", key, "value: ", value)
-            total += len(value)
-            cur_matched = 1
-            predicted_labels.append(len(gestureList)+1)
-            gestureList.append(key)
-            refSeq = value[0]
-            refSeq = convertString(refSeq)            
-            for i in range(len(value)-1):
-                pattern = value[i+1]
-                pattern = convertString(pattern) 
-                print("ref: ", refSeq, " pattern", pattern)
-                val = isMatched(refSeq, pattern, editDistanceSize=1)
-                print("val: ", val)
-                cur_matched += val
-                if(val == 0):
-                    li = newSeqWrongPred.get(key, -1)
-                    if(li == -1):
-                        v = newSeqDicFeatures.get(key)
-                        li = [v[i+1]]
-                        newSeqWrongPred[key] = li
-                    else:
-                        v = newSeqDicFeatures.get(key)
-                        li.append(v[i+1])
-                        newSeqWrongPred.update({key: li})
+    global newLabelDic, gestureList, newSeqWrongPred, newSeqDicFeatures
+    total = 0
+    total_matched = 0
+    matched_list = []
+    not_matched_list = []
+    predicted_labels = []
+    confusion = None
+    for key, value in newLabelDic.items():
+        print("key: ", key, "value: ", value)
+        total += len(value)
+        cur_matched = 1
+        predicted_labels.append(len(gestureList)+1)
+        gestureList.append(key)
+        refSeq = value[0]
+        refSeq = convertString(refSeq)            
+        for i in range(len(value)-1):
+            pattern = value[i+1]
+            pattern = convertString(pattern) 
+            print("ref: ", refSeq, " pattern", pattern)
+            val = isMatched(refSeq, pattern, editDistanceSize=1)
+            print("val: ", val)
+            cur_matched += val
+            if(val == 0):
+                li = newSeqWrongPred.get(key, -1)
+                if(li == -1):
+                    v = newSeqDicFeatures.get(key)
+                    li = [v[i+1]]
+                    newSeqWrongPred[key] = li
+                else:
+                    v = newSeqDicFeatures.get(key)
+                    li.append(v[i+1])
+                    newSeqWrongPred.update({key: li})
 
-            total_matched += cur_matched
-            matched_list.append(cur_matched)
-            not_matched_list.append(len(value) -cur_matched)
-        if(total != total_matched):
-            predicted_labels.append(len(gestureList)+1)
-            gestureList.append("Unknown Sequence")
-            matched_list.append(0)
-            not_matched_list.append(0)
-        
-        confusion = np.zeros((len(predicted_labels),len(predicted_labels)), dtype=int)
-        print("matched: ", matched_list)
-        for i in range(confusion.shape[0]):
-            confusion[i,confusion.shape[0]-1] = not_matched_list[i]
-            confusion[i,i] = matched_list[i]
-        print("confusion_matrix: ", confusion)
-        return total, total_matched, matched_list, not_matched_list, confusion, predicted_labels
+        total_matched += cur_matched
+        matched_list.append(cur_matched)
+        not_matched_list.append(len(value) -cur_matched)
+    if(total != total_matched):
+        predicted_labels.append(len(gestureList)+1)
+        gestureList.append("Unknown Sequence")
+        matched_list.append(0)
+        not_matched_list.append(0)
+    
+    confusion = np.zeros((len(predicted_labels),len(predicted_labels)), dtype=int)
+    print("matched: ", matched_list)
+    for i in range(confusion.shape[0]):
+        confusion[i,confusion.shape[0]-1] = not_matched_list[i]
+        confusion[i,i] = matched_list[i]
+    print("confusion_matrix: ", confusion)
+    return total, total_matched, matched_list, not_matched_list, confusion, predicted_labels
 
 def convertString(str1):
+    global seqToGesMap
     pattern = ""
     s = str1.split(" ")
     print("s: ", s)
@@ -658,6 +700,7 @@ def hammingDist(str1, str2):
     return count
 
 def calculateGestureAcc(y_pred_prob):
+    global y_pred_prob_global
     confidence = 1
     count_list_actual = []
     labels_count = np.zeros(21)
@@ -676,6 +719,8 @@ def calculateGestureAcc(y_pred_prob):
     return confidence_list, count_list_actual
 
 def analyze_conflict_helper(sequence : list):
+    global count_list_actual_global, sequenceMap
+
     if len(sequence) == 0:
         return {
                 'message': "Invalid sequence",
@@ -723,7 +768,11 @@ def analyze_conflict_helper(sequence : list):
         output_map['status'] = 'OKAY'
         output_map['confidence'] = np.ndarray.tolist(np.load('./data/confidence_list_final_2.npy').flatten())
         output_map['regular'] = np.ndarray.tolist(conflicts_data[:, id].flatten())
-        output_map['gesture'] = np.ndarray.tolist(count_list_actual.flatten())
+        if type(count_list_actual) is list: 
+            temp = count_list_actual
+        else:
+            temp = np.ndarray.tolist(count_list_actual.flatten())
+        output_map['gesture'] = temp
         output_map['sequence'] = actual_gesture[0]
         return output_map
     
@@ -733,6 +782,8 @@ def analyze_conflict_helper(sequence : list):
     if(count_list_actual_global is not None):
         count_list_actual = count_list_actual_global
     else:
+
+        print("count_list_actual_global is always none: ", count_list_actual_global)
         count_list_actual = np.load('./data/count_list_actual.npy')
 
     output_map = {}
@@ -740,7 +791,13 @@ def analyze_conflict_helper(sequence : list):
     output_map['status'] = 'OKAY'
     output_map['confidence'] = confidence_list
     output_map['regular'] = count_list_reg
-    output_map['gesture'] = np.ndarray.tolist(count_list_actual.flatten())
+
+    if type(count_list_actual) is list: 
+        temp = count_list_actual
+    else:
+        temp = np.ndarray.tolist(count_list_actual.flatten())
+    output_map['gesture'] = temp
+
     if(count_list_reg_final is not None):
         for i in range(len(count_list_reg_final)):
             output_map['hamming'+str(i+1)] = count_list_reg_final[i]
@@ -751,8 +808,10 @@ def analyze_conflict_helper(sequence : list):
 def analyze_conflict(sequence : list):
     '''
     Code for analyzing conflicts for a given sequence.
+
     Parameter
     sequence (list): gesture sequence list (Example: ['a0', 'a1', 'a0', 'a6'])
+
     Returns
     dict: dictionary containing conflict analysis chart data (confidence, regular activity, gesture, hamming distances)
     Example -> {
@@ -762,7 +821,9 @@ def analyze_conflict(sequence : list):
         'hamming1': [], # optional
         ...
     }
+
     '''
+    global conflict_analysis_result, avg_conflict_analysis_result, reverse_sequence_map
 
     if len(sequence) == 0:
         return {
@@ -822,7 +883,13 @@ def analyze_conflict(sequence : list):
         output_map['status'] = 'OKAY'
         output_map['confidence'] = np.ndarray.tolist(np.load('./data/confidence_list_final_2.npy').flatten())
         output_map['regular'] = np.ndarray.tolist(conflicts_data[:, id].flatten())
-        output_map['gesture'] = np.ndarray.tolist(count_list_actual.flatten())
+
+        if type(count_list_actual) is list: 
+            temp = count_list_actual
+        else:
+            temp = np.ndarray.tolist(count_list_actual.flatten())
+
+        output_map['gesture'] = temp
         output_map['sequence'] = actual_gesture[0]
         return output_map
     
@@ -839,7 +906,12 @@ def analyze_conflict(sequence : list):
     output_map['status'] = 'OKAY'
     output_map['confidence'] = confidence_list
     output_map['regular'] = count_list_reg
-    output_map['gesture'] = np.ndarray.tolist(count_list_actual.flatten())
+    if type(count_list_actual) is list: 
+        temp = count_list_actual
+    else:
+        temp = np.ndarray.tolist(count_list_actual.flatten())
+    output_map['gesture'] = temp
+
     if(count_list_reg_final is not None):
         for i in range(len(count_list_reg_final)):
             output_map['hamming'+str(i+1)] = count_list_reg_final[i]
@@ -883,6 +955,7 @@ def checkTimeConstraint(list1):
         return True
 
 def calculateConflicts(actual_gesture_ids, actual_gesture):
+    global seqToGesMap, regular_activites_data
     confidence = 1
     confidence_list = []
     count_list_reg = []
@@ -994,6 +1067,9 @@ def get_confusion_chart_data(i_label: str, j_label: str):
         }
     }
     """
+
+    global gestureList, gestureMap, newSeqDicFeatures, newSeqWrongPred
+    global data_combined, right_pred, wrong_pred
     i = -1
     j = -1
     for k in range(len(gestureList)):
@@ -1086,16 +1162,17 @@ def get_formated_data(x, y, z, roll, pitch, yaw):
 
 def save_plot(title, confidence_list, gesture_list, regular_list, file_name, directory, confidence = None):
 
+    plt.clf()
     plt.title(title)
     plt.plot(confidence_list, gesture_list, color='darkgreen', marker='x', label='Gestures')
     plt.plot(confidence_list, regular_list, color='darkred', marker='o', label='Regular activities')
 
     if confidence is not None:
-        plt.axvline(confidence, color='darkblue', linestyle='--', label='Selected Confidence')
+        plt.axvline(confidence, color='darkblue', linestyle='--', label='Confidence threshold')
 
     ax = plt.gca()
     plt.xlabel("Confidence")
-    plt.ylabel("TP (Gestures) -- FP (Regular activities)")
+    plt.ylabel("Detection Rate")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     plt.grid(True)
@@ -1120,7 +1197,7 @@ def get_json_data_for_report(confidence_list, gesture_list, regular_list, file_n
     output["At confidence"] = confidence
     output["Gesture Recognition Accuracy"] = str(gesture_list[index] * 100) + "%"
     output["False Positives from Regular Activites"] = str(regular_list[index] * 100) + "%"
-    output["Overall Accuracy"] = str((gesture_list[index] - regular_list[index]) * 100) + "%"
+    # output["Overall Accuracy"] = str((gesture_list[index] - regular_list[index]) * 100) + "%"
 
     with open(directory+file_name+".json", "w", encoding='utf-8') as outfile:
         json.dump(output, outfile, ensure_ascii=False, indent=4)
@@ -1129,6 +1206,8 @@ def get_json_data_for_report(confidence_list, gesture_list, regular_list, file_n
 
 
 def generate_report(confidence: float):
+    global conflict_analysis_result, avg_conflict_analysis_result
+
     folder_name = "gesture_report"
     final_directory = os.path.join("", folder_name)
     if not os.path.exists(final_directory):
@@ -1154,7 +1233,7 @@ def generate_report(confidence: float):
     # avg_conflict_analysis_result['gesture'] = np.ndarray.tolist(gesture.flatten())
     # avg_conflict_analysis_result['confidence'] = confidence
 
-    print("avg_conflict_analysis_result: ", avg_conflict_analysis_result)
+    # print("avg_conflict_analysis_result: ", avg_conflict_analysis_result)
     if avg_conflict_analysis_result is not None:
         confidence_list = avg_conflict_analysis_result['confidence']
         gesture_list = avg_conflict_analysis_result['gesture']  
@@ -1190,7 +1269,9 @@ def generate_report(confidence: float):
         file_name = "Conflict_Analysis_JSON_"+ key
         get_json_data_for_report(confidence_list, gesture_list, regular_list, file_name, directory, confidence = confidence)
 
-    return {"status": "success", directory: folder_name}
+    shutil.make_archive(folder_name, 'zip', './'+folder_name)
+    shutil.rmtree('./'+folder_name)
+    return {"status": "success", 'filename': folder_name + '.zip'}
 
 
 # if __name__ == '__main__':

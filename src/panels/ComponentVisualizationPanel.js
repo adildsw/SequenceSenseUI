@@ -97,10 +97,10 @@ const ComponentVisualizationPanel = (props) => {
 
         var yAxisLabel = componentType.charAt(0).toUpperCase() + componentType.slice(1);
         if (chartType === 'distance') {
-            yAxisLabel += '-Distance';
+            yAxisLabel += '-Distance (m)';
         }
         else if (chartType === 'orientation') {
-            yAxisLabel += '-Angle';
+            yAxisLabel += '-Angle (deg)';
         }
         
         return (
@@ -174,8 +174,8 @@ const ComponentVisualizationPanel = (props) => {
         if (chartType === 'orientation') {
             xAxisDataKey = 'pitch';
             yAxisDataKey = 'yaw';
-            xAxisLabel = 'Pitch-Angle (degree)';
-            yAxisLabel = 'Yaw-Angle (degree)';
+            xAxisLabel = 'Pitch-Angle (deg)';
+            yAxisLabel = 'Yaw-Angle (deg)';
         }
         var domain = [-0.5, 0.5];
         if (chartType === 'orientation') {

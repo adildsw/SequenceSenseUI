@@ -17,6 +17,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.1.0",
     "react-draggable": "^4.4.5",
+    "react-player": "^2.10.1",
     "react-scripts": "^5.0.1",
     "recharts": "^2.1.10",
     "web-vitals": "^2.1.4",

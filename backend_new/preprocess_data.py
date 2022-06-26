@@ -32,6 +32,15 @@ newSeqWrongPred = {}
 # global y_pred_prob_global
 y_pred_prob_global = None
 
+
+def clean_up_preprocess_data():
+    global newLabelDic, newSeqDic, newSeqDicFeatures, newSeqWrongPred, y_pred_prob_global
+    newLabelDic ={}
+    newSeqDic = {}
+    newSeqDicFeatures = {}
+    newSeqWrongPred = {}
+    y_pred_prob_global = None
+
 reverseSequenceMap = {
         1:"a0 a1",
         2:"a0 a2 a0 a2",
@@ -88,6 +97,7 @@ class ProssedData:
 def loadFiles(data, drc, gestureName, isKnown = True):
     # original_data
     # data = loadtxt(fileName, delimiter=',')
+    global newLabelDic, newSeqDic, newSeqDicFeatures, newSeqWrongPred, y_pred_prob_global
     data_stationary = loadtxt('./data/LOG0.CSV', delimiter=',') #np.copy(data[:100,])
     print(data.shape)
     print(data_stationary.shape)
@@ -551,6 +561,7 @@ def find_peak_Angle(X):
     return indices, indices2
 
 def classifyUploadedGestures(processed_data):
+    # global newLabelDic, newSeqDic, newSeqDicFeatures, newSeqWrongPred, y_pred_prob_global
     # print(len(processed_data))
     if(len(processed_data) <= 0):
         return

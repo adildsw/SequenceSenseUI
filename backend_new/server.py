@@ -2,12 +2,13 @@ import json
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 
-from backend import classify, analyze_conflict, get_confusion_chart_data, generate_report
+from backend import classify, analyze_conflict, get_confusion_chart_data, generate_report, cleanupState
+from preprocess_data import clean_up_preprocess_data
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-IP = '127.0.0.1'
+IP = '192.168.0.102'
 PORT = 3001
 
 @app.route('/')
@@ -16,6 +17,8 @@ def index():
 
 @app.route('/classify', methods=['POST'])
 def classifyAPI():
+    cleanupState()
+    # clean_up_preprocess_data()
     resData = json.loads(request.data)
     labels = resData['labels']
     files = resData['files']
@@ -28,6 +31,7 @@ def analyzeAPI():
     sequence = resData['sequence']
     return jsonify(analyze_conflict(sequence))
 
+
 @app.route('/analyzeconfusionmatrix', methods=['POST'])
 def analyzeConfusionAPI():
     resData = json.loads(request.data)
@@ -36,18 +40,20 @@ def analyzeConfusionAPI():
     print(i_label, j_label)
     return jsonify(get_confusion_chart_data(i_label, j_label))
 
-@app.route('/getsamplegesturedata', methods=['GET', 'POST'])
-def getSampleGestureDataAPI():
-    file = send_file('sample_gesture_data.zip', mimetype='application/zip', as_attachment=True)
-    return file
 
 @app.route('/generatereport', methods=['POST'])
 def generateReportAPI():
     resData = json.loads(request.data)
     confidence = resData['confidence']
-    print(confidence)
     result = generate_report(confidence)
-    return jsonify(result)
+    file = send_file(result['filename'], mimetype='application/zip', as_attachment=True)
+    return file
+
+@app.route('/getsamplegesturedata', methods=['GET', 'POST'])
+def getSampleGestureDataAPI():
+    file = send_file('sample_gesture_data.zip', mimetype='application/zip', as_attachment=True)
+    return file
+
 
 if __name__ == '__main__':
     app.run(host=IP, port=PORT, debug=False)

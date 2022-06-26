@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine, Tooltip } from 'recharts';
 import randomColor from 'randomcolor';
 import { saveAs } from 'file-saver';
+import ReactPlayer from 'react-player';
 
 import AtomicAction from '../components/AtomicAction';
 import SequenceDesigner from '../components/SequenceDesigner';
@@ -34,6 +35,8 @@ const ConflictPanel = (props) => {
         setIsComponentVisualizationVisible, 
         confidenceValue, 
         setConfidenceValue, 
+        isSequencePreviewing, 
+        setIsSequencePreviewing,
         serverAddress
     } = props;
 
@@ -41,6 +44,7 @@ const ConflictPanel = (props) => {
     const [aggregateVisualization, setAggregateVisualization] = useState(true);
     const [specificGestureVisualization, setSpecificGestureVisualization] = useState({});
     const [specificGestureVisualizationColors, setSpecificGestureVisualizationColors] = useState({});
+    const [sequencePreviewIdx, setSequencePreviewIdx] = useState(0);
 
     const [conflictChartDim, setConflictChartDim] = useState([0, 0]);
     const [previewDim, setPreviewDim] = useState([0, 0]);
@@ -127,7 +131,7 @@ const ConflictPanel = (props) => {
         var atomicActionNames = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'a11', 'a12', 'a13', 'a14', 'aw1', 'aw2', 'aw3', 'aw4'];
         for (var i = 0; i < atomicActionNames.length; i++) {
             atomicActions.push(
-                <AtomicAction key={i} type={atomicActionNames[i]} selectedAtomicAction={selectedAtomicAction} setSelectedAtomicAction={setSelectedAtomicAction} gestureSequence={gestureSequence} />
+                <AtomicAction key={i} type={atomicActionNames[i]} selectedAtomicAction={selectedAtomicAction} setSelectedAtomicAction={setSelectedAtomicAction} gestureSequence={gestureSequence} setIsSequencePreviewing={setIsSequencePreviewing} />
             );
         }
         return atomicActions;
@@ -272,6 +276,43 @@ const ConflictPanel = (props) => {
         return Math.round(gestureVal * 100) + '%';
     }
 
+    const getNowPlayingString = () => {
+        if (isSequencePreviewing) {
+            // var str = <Text></Text>
+            // for (var i of gestureSequence) {
+
+            // }
+            return 'Sequencing Previewing';
+        }
+        else if (selectedAtomicAction !== null) {
+            return <Text strong>{selectedAtomicAction}</Text>
+        }
+        return '';
+    }
+
+    const updateSequencePreview = () => {
+        console.log(sequencePreviewIdx);
+        if (gestureSequence.length < sequencePreviewIdx - 1) {
+            setSequencePreviewIdx(prevState => {
+                return prevState + 1;
+            });
+        }
+        else {
+            setIsSequencePreviewing(false);
+        }
+    }
+
+    const getSequencePreviewPathArray = () => {
+        var pathArray = [];
+        for (var i = 0; i < gestureSequence.length; i++) {
+            pathArray.push(
+                'animations/' + gestureSequence[i] + '.mp4'
+            );
+        }
+        console.log(pathArray);
+        return pathArray;
+    }
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px' }}>
             <Space direction='horizontal' style={{ display: 'flex', flexDirection: 'row', marginBottom: '12px', justifyContent: 'space-between' }}>
@@ -309,20 +350,31 @@ const ConflictPanel = (props) => {
                         </Card>
                     </Col>
                     <Col span={14} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingRight: '6px', paddingLeft: '6px' }}>
-                        <SequenceDesigner selectedGesture={selectedGesture} setSpecificGestureVisualization={setSpecificGestureVisualization} classifierData={classifierData} setClassifierData={setClassifierData} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
+                        <SequenceDesigner setSequencePreviewIdx={setSequencePreviewIdx} selectedGesture={selectedGesture} setSpecificGestureVisualization={setSpecificGestureVisualization} classifierData={classifierData} setClassifierData={setClassifierData} setIsSequencePreviewing={setIsSequencePreviewing} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
-                        <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
-                            <div ref={previewAreaRef} style={{ height: '100%', display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
+                        <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%', borderBottom: '0' }} bodyStyle={{ display: 'flex', flexGrow: '1', flexDirection:'column', justifyContent: 'center', alignItems: 'center' }}>
+                            <div ref={previewAreaRef} style={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
                                 { 
                                     selectedAtomicAction === null ?
                                     <Text type={'secondary'}>
                                         <InfoCircleOutlined /> <b>Tip:</b> Select atomic action or click on <i>Preview Sequence</i> to preview the gesture.
                                     </Text> :
-                                    <Image src={getAnim(selectedAtomicAction)} preview={false} style={{ height: previewDim[1] * 0.9 + 'px' }} />
+                                    // <Image src={getAnim(selectedAtomicAction)} preview={false} style={{ height: previewDim[1] * 0.9 + 'px' }} />
+                                    // <ReactPlayer url={'https://www.youtube.com/watch?v=ysz5S6PUM-U'} controls width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
+                                    <>
+                                        {
+                                            isSequencePreviewing ?
+                                            <ReactPlayer url={getSequencePreviewPathArray} controls={false} playing loop={false} onEnded={() => { updateSequencePreview(); }} width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} /> :
+                                            <ReactPlayer url={'animations/' + selectedAtomicAction + '.mp4'} controls={false} playing loop width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
+                                        }
+                                    </>
+                                    // <ReactPlayer url={'animations/' + selectedAtomicAction + '.mp4'} controls={false} playing loop={!isSequencePreviewing} onEnded={() => { updateSequencePreview(); }} width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
                                 }
                             </div>
-
+                        </Card>
+                        <Card size='small' style={{ borderTop: getNowPlayingString() === '' ? '0' : '1px solid #eee', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            {getNowPlayingString()}
                         </Card>
                     </Col>
                 </Row>
@@ -348,18 +400,18 @@ const ConflictPanel = (props) => {
                             <Card title={'Configure Conflict Analysis Visualization'} size='small' style={{ display: 'flex', flexDirection: 'column', flexGrow: '1' }} bodyStyle={{ display: 'flex', flexDirection: 'column', height: conflictChartDim[1] + 'px' }}>
                                 <Space direction={'vertical'} size={8} style={{ width: '100%', display: 'flex' }}>
                                     <Row>
-                                        <Col span={10} style={{ margin: 'auto' }}>
+                                        <Col xl={isComponentVisualizationVisible ? 12 : 16} xxl={isComponentVisualizationVisible ? 14 : 16} style={{ margin: 'auto' }}>
                                             <Slider min={0} max={1} step={0.05} marks={{0: '0', 1: '1'}} tipFormatter={(value) => 'Confidence Threshold: ' + value} value={confidenceValue} onChange={(value) => {setConfidenceValue(value); }}/>
                                         </Col>
-                                        <Col span={7}>
+                                        <Col xl={isComponentVisualizationVisible ? 6 : 4} xxl={isComponentVisualizationVisible ? 5 : 4}>
                                             <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                                <Text strong>Gesture Accuracy</Text>
+                                                <Text strong style={{ textAlign: 'center' }}>Gesture<br/>Accuracy</Text>
                                                 <Title level={3} style={{ margin: '0' }}>{computeAccuracy('accuracy')}</Title>
                                             </div>
                                         </Col>
-                                        <Col span={7}>
+                                        <Col xl={isComponentVisualizationVisible ? 6 : 4} xxl={isComponentVisualizationVisible ? 5 : 4}>
                                             <div style={{ width: '100%', flexGrow: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                                <Text strong>False Activations</Text>
+                                                <Text strong style={{ textAlign: 'center' }}>False<br/>Activations</Text>
                                                 <Title level={3} style={{ margin: '0' }}>{computeAccuracy('regular')}</Title>
                                             </div>
                                         </Col>

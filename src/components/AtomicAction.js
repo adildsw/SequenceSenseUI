@@ -6,7 +6,7 @@ import '../App.css';
 import midShape from '../assets/shapes/shape-mid.svg';
 
 const AtomicAction = (props) => {
-    const { type, selectedAtomicAction, setSelectedAtomicAction } = props;
+    const { type, selectedAtomicAction, setSelectedAtomicAction, setIsSequencePreviewing } = props;
 
     const [{ isDragging }, drag] = useDrag(() => ({
         type: 'atomic-action',
@@ -17,6 +17,7 @@ const AtomicAction = (props) => {
     }));
 
     const onAtomicActionClick = () => {
+        setIsSequencePreviewing(false);
         setSelectedAtomicAction(prevState => {
             if (prevState === type) {
                 return null;

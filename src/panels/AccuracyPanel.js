@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { InfoCircleFilled, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Button, Image, Card, Space, Table, Tooltip, Typography, Row, Col, Modal } from 'antd';
+import { Button, Image, Card, Space, Table, Tooltip, Typography, Row, Col, Modal, message } from 'antd';
 import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, Label } from "recharts";
 
 import { generateYAxisLabel, getChartLines } from "../utils/ChartUtils";
@@ -79,12 +79,30 @@ const AccuracyPanel = (props) => {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
-                setClassificationVisualizationModalVisibility(() => {
-                    setSelectedClassification({ actualIdx: actualIdx, predictedIdx: predictedIdx, actual: data.actual, predicted: data.predicted });
-                    return true; 
-                }); 
-                setIsFetchingConfusionMatrixAnalysis(false);
+                if (!Object.keys(data).includes('status')) {
+                    message.error('Error: Invalid response from server.')
+                    setClassificationVisualizationModalVisibility(() => {
+                        setSelectedClassification({actualIdx: -1, predictedIdx: -1, actual: {}, predicted: {}});
+                        return false; 
+                    }); 
+                    setIsFetchingConfusionMatrixAnalysis(false);
+                }
+                else if (data.status !== 'Ok') {
+                    message.error('Error: ' + data.message);
+                    setClassificationVisualizationModalVisibility(() => {
+                        setSelectedClassification({actualIdx: -1, predictedIdx: -1, actual: {}, predicted: {}});
+                        return false; 
+                    }); 
+                    setIsFetchingConfusionMatrixAnalysis(false);
+                }
+                else {
+                    console.log(data);
+                    setClassificationVisualizationModalVisibility(() => {
+                        setSelectedClassification({ actualIdx: actualIdx, predictedIdx: predictedIdx, actual: data.actual, predicted: data.predicted });
+                        return true; 
+                    }); 
+                    setIsFetchingConfusionMatrixAnalysis(false);
+                }
             }, error => {
                 console.log(error);
                 setClassificationVisualizationModalVisibility(() => {

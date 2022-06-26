@@ -1,5 +1,5 @@
-import { DeleteOutlined, LeftOutlined, RightOutlined, SettingOutlined, VideoCameraOutlined } from "@ant-design/icons";
-import { Button, Card, Image, Tooltip, Typography } from "antd";
+import { SettingOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { Button, Card, Image, message, Typography, Popover } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { useDrop } from "react-dnd";
 
@@ -10,8 +10,9 @@ import lastShape from '../assets/shapes/shape-last.svg';
 const { Text } = Typography;
 
 const SequenceDesigner = (props) => {
-    const { gestureSequence, setGestureSequence, selectedGesture, setSpecificGestureVisualization, classifierData, setClassifierData, setConflictData, screenConfig, setSequenceDesignerResizeFunc, serverAddress, setIsFetchingConflictAnalysis } = props;
+    const { gestureSequence, setGestureSequence, selectedGesture, setSpecificGestureVisualization, classifierData, setClassifierData, setConflictData, setIsSequencePreviewing, setSequencePreviewIdx, screenConfig, setSequenceDesignerResizeFunc, serverAddress, setIsFetchingConflictAnalysis } = props;
 
+    const [popoverVisible, setPopoverVisible] = useState(false);
     const [sequenceDesignerDim, setSequenceDesignerDim] = useState([0, 0]);
 
     const sequenceDesignerAreaRef = useCallback(node => {
@@ -29,6 +30,19 @@ const SequenceDesigner = (props) => {
             });
         }
     }, [setSequenceDesignerResizeFunc]);
+
+    useEffect(() => {
+        window.addEventListener('click', (e) => {
+            if (!String(e.target.className).includes('ant-popover')) {
+                setPopoverVisible(prevState => {
+                    if (prevState.visible === true)
+                        return {...prevState, 'visible': false};
+                    else
+                        return prevState;
+                });
+            }
+        });
+    }, []);
 
     const [{ canDrop, isOver }, drop] = useDrop(() => ({
         accept: 'atomic-action', 
@@ -56,24 +70,45 @@ const SequenceDesigner = (props) => {
 
             var marginLeft = '0px';
             if (i === 0) marginLeft = '-' + sequenceDesignerDim[0] / 17 + 'px';
-            else if (i === 6) marginLeft = '-' + sequenceDesignerDim[0] / 17 + 'px';
+            else if (i === 6) marginLeft = '-' + sequenceDesignerDim[0] / 34 + 'px';
             else {
                 marginLeft = '-' + sequenceDesignerDim[0] / 32 + 'px';
             }
 
-            var style = {
+            var imgStyle = {
                 position: 'relative',
                 filter: 'invert(10%)', 
                 width: sequenceDesignerDim[0] / 6.3 + 'px',
                 marginRight: marginLeft,
             }
+            var textStyle = {
+                position: 'absolute',
+                top: '50%', 
+                left: '50%', 
+                transform: i === 0 ? 'translate(-50%, -50%)' : i === 7 ? 'translate(50%, -50%)' : 'translate(100%, -50%)'
+            }
+
             gestureSequenceFlow.push(
-                <Tooltip key={i} title={gestureSequence[i]}>
-                    <Image className={'sequence-atomic-action'} src={srcImg} preview={false} style={style} />
-                </Tooltip>
+                <div className={i} style={{ position: 'relative' }}>
+                    {/* <Tooltip key={i} title={gestureSequence[i]}> */}
+                        <Image className={'sequence-atomic-action gesture-' + i} src={srcImg} preview={false} style={imgStyle} onClick={(e) => { handleSequenceActionClick(e); }} />
+                        <p style={textStyle}><Text strong>{gestureSequence[i]}</Text></p>
+                    {/* </Tooltip> */}
+                </div>
             )
         }
         return gestureSequenceFlow;
+    }
+
+    const handleSequenceActionClick = (event) => {
+        var actionIdx = -1;
+        for (var c of event.target.className.split(' ')) {
+            if (c.startsWith('gesture-')) {
+                actionIdx = parseInt(c.split('-')[1]);
+            }
+        }
+        console.log(actionIdx);
+        // setPopoverVisible(true);
     }
 
     const dropSpaceParams = {
@@ -120,26 +155,48 @@ const SequenceDesigner = (props) => {
                     return response.json();
                 })
                 .then(data => {
-                    console.log(data);
-                    setConflictData({ gestureSequence: gestureSequence, chartData: data});
-                    var newClassifierData = { ...classifierData };
-                    newClassifierData.gestureSequence = gestureSequence;
-                    newClassifierData['avgConflictAnalysis'] = data['avgConflictAnalysis'];
-                    newClassifierData['conflictAnalysis']['custom_seq'] = data['conflictAnalysis']['custom_seq'];
-                    setClassifierData(prevState => {
-                        console.log(prevState);
-                        console.log(newClassifierData);
-                        return newClassifierData
-                    });
-                    setSpecificGestureVisualization(prevState => {
-                        var newState = { ...prevState };
-                        for (var gesture of Object.keys(newState)) {
-                            if (gesture !== 'custom_seq') newState[gesture] = false;
-                            else newState[gesture] = true;
-                        }
-                        return newState;
-                    })
-                    setIsFetchingConflictAnalysis(false);
+                    if (!Object.keys(data).includes('status')) {
+                        message.error('Error: Invalid response from server.')
+                        setIsFetchingConflictAnalysis(false);
+                        setConflictData({ gestureSequence: [], chartData: {}})
+                        setClassifierData(prevState => {
+                            var newClassifierData = { ...prevState };
+                            newClassifierData.gestureSequence = [];
+                            return newClassifierData;
+                        });
+                    }
+                    else if (data.status !== 'Ok') {
+                        message.error('Error: ' + data.message);
+                        setIsFetchingConflictAnalysis(false);
+                        setConflictData({ gestureSequence: [], chartData: {}})
+                        setClassifierData(prevState => {
+                            var newClassifierData = { ...prevState };
+                            newClassifierData.gestureSequence = [];
+                            return newClassifierData;
+                        });
+                    }
+                    else {
+                        console.log(data);
+                        setConflictData({ gestureSequence: gestureSequence, chartData: data});
+                        var newClassifierData = { ...classifierData };
+                        newClassifierData.gestureSequence = gestureSequence;
+                        newClassifierData['avgConflictAnalysis'] = data['avgConflictAnalysis'];
+                        newClassifierData['conflictAnalysis']['custom_seq'] = data['conflictAnalysis']['custom_seq'];
+                        setClassifierData(prevState => {
+                            console.log(prevState);
+                            console.log(newClassifierData);
+                            return newClassifierData
+                        });
+                        setSpecificGestureVisualization(prevState => {
+                            var newState = { ...prevState };
+                            for (var gesture of Object.keys(newState)) {
+                                if (gesture !== 'custom_seq') newState[gesture] = false;
+                                else newState[gesture] = true;
+                            }
+                            return newState;
+                        })
+                        setIsFetchingConflictAnalysis(false);
+                    }
                 }, error => {
                     console.log(error);
                     setIsFetchingConflictAnalysis(false);
@@ -184,7 +241,21 @@ const SequenceDesigner = (props) => {
                     <Button disabled style={{ borderLeft: '0px', marginRight: '12px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}><RightOutlined /></Button>
                 </Tooltip> */}
                 <Button disabled={gestureSequence.length === 0} style={{ flexGrow: '1', marginRight: '12px' }} onClick={() => { analyzeConflict(); }}><SettingOutlined />Calculate Conflict</Button>
-                <Button disabled={gestureSequence.length === 0}><VideoCameraOutlined />{'Preview Sequence'}</Button>
+                <Button 
+                    disabled={gestureSequence.length === 0} 
+                    onClick={() => {
+                        setIsSequencePreviewing(prevState => {
+                            setSequencePreviewIdx(0);
+                            return true;
+                        })
+                    }}>
+                    <VideoCameraOutlined />{'Preview Sequence'}</Button>
+                <Popover
+                    content={<a onClick={() => { setPopoverVisible(false); }}>Close</a>}
+                    title="Title"
+                    visible={popoverVisible}
+                    onVisibleChange={(value) => { setPopoverVisible(value); }}
+                />
             </div>
         </>
     );
