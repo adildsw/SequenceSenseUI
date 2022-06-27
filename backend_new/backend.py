@@ -249,23 +249,32 @@ def classify(labels: list, files: dict, data: dict):
         i = 0
         for file in files_for_label:
             # get the data for each file
-            d = data[file]
-            lines = d.split('\n')
-            final_d = []
-            for line in lines:
-                dtemp = line.split(',')
-                if len(dtemp) > 1:
-                    for idx, val in enumerate(dtemp):
-                        dtemp[idx] = float(val)
-                    final_d.append(dtemp)
-            data_for_file = np.array(final_d)
-            print("CheckSahpe: ", data_for_file.shape)
+            try:
+                d = data[file]
+                lines = d.split('\n')
+                final_d = []
+                for line in lines:
+                    dtemp = line.split(',')
+                    if len(dtemp) > 1:
+                        for idx, val in enumerate(dtemp):
+                            dtemp[idx] = float(val)
+                        final_d.append(dtemp)
+                data_for_file = np.array(final_d)
+            except:
+                return {
+                    'status': "Error",
+                    'message': "Error in processing file, invalid file."
+                }
+
+            print("CheckShape: ", data_for_file.shape)
             processed_data = loadFiles(data_for_file, indexLabel, label, isExistingGesture)
 
             if(processed_data is None):
                 # add comments for that gesture
-                continue
-
+                return  {
+                    'status': "Error",
+                    'message': "Error in processing file, invalid file."
+                    }
 
             if isExistingGesture:
                 if i == 0:
@@ -370,6 +379,8 @@ def classify(labels: list, files: dict, data: dict):
     avg_conflict_analysis_result = get_avg_conflict_analysis_result()
      
     return {
+        'status': "Ok",
+        'message': "Successs",
         'accuracy': accuracy_s,
         'chartData': chart_data,
         'confusionMatrix': np.ndarray.tolist(confusion),
@@ -390,7 +401,7 @@ def get_avg_conflict_analysis_result():
     count = 0
     for key in conflict_analysis_result:
         conflict_map = conflict_analysis_result[key]
-        if conflict_map["status"] == "OKAY":
+        if conflict_map["status"] == "Ok":
             # output_map['confidence']
             if regular is None:
                 regular = np.array(conflict_map['regular'])
@@ -407,7 +418,7 @@ def get_avg_conflict_analysis_result():
     analysis_result['regular'] = np.ndarray.tolist(regular.flatten())
     analysis_result['gesture'] = np.ndarray.tolist(gesture.flatten())
     analysis_result['confidence'] = confidence
-    analysis_result['status'] = "OKAY"
+    analysis_result['status'] = "Ok"
     analysis_result['message'] = "Average conflict analysis result"
     return analysis_result
 
@@ -764,8 +775,8 @@ def analyze_conflict_helper(sequence : list):
         
         conflicts_data = np.load("./data/all_conflicts.npy")
         output_map = {}
-        output_map['message'] = 'OKAY'
-        output_map['status'] = 'OKAY'
+        output_map['message'] = 'Ok'
+        output_map['status'] = 'Ok'
         output_map['confidence'] = np.ndarray.tolist(np.load('./data/confidence_list_final_2.npy').flatten())
         output_map['regular'] = np.ndarray.tolist(conflicts_data[:, id].flatten())
         if type(count_list_actual) is list: 
@@ -787,8 +798,8 @@ def analyze_conflict_helper(sequence : list):
         count_list_actual = np.load('./data/count_list_actual.npy')
 
     output_map = {}
-    output_map['message'] = 'OKAY'
-    output_map['status'] = 'OKAY'
+    output_map['message'] = 'Ok'
+    output_map['status'] = 'Ok'
     output_map['confidence'] = confidence_list
     output_map['regular'] = count_list_reg
 
@@ -827,8 +838,8 @@ def analyze_conflict(sequence : list):
 
     if len(sequence) == 0:
         return {
-                'message': "Invalid sequence",
-                'status': "All atomic sequence from a1-a13 must start with a0."
+                'message': "Invalid sequence, all atomic sequence from a1-a13 must start with a0.",
+                'status': "Error"
             }
 
     seq_str = " ".join(sequence)
@@ -836,8 +847,8 @@ def analyze_conflict(sequence : list):
 
     if label is not None and conflict_analysis_result.get(label) is not None:
         return {
-            'message': "OKAY",
-            'status': "OKAY",
+            'message': "Ok",
+            'status': "Ok",
             'conflictAnalysis': conflict_analysis_result,
             'avgConflictAnalysis': avg_conflict_analysis_result
             }
@@ -855,8 +866,8 @@ def analyze_conflict(sequence : list):
             i = i+1
         if(sequenceMap.get(s) == None):
             return {
-                'message': "Invalid sequence",
-                'status': "All atomic sequence from a1-a13 must start with a0."
+                'message': "Invalid sequence, all atomic sequence from a1-a13 must start with a0.",
+                'status': "Error"
             }
         else:
             actual_gesture.append(s)
@@ -867,8 +878,8 @@ def analyze_conflict(sequence : list):
     print(actual_gesture_ids)
     if(len(actual_gesture_ids) > 4):
         return {
-                'message': "Invalid sequence",
-                'status': "Sequencing more than 4 gestures won't be practical that we ignored them!"
+                'message': "Invalid sequence, sequencing more than 4 gestures won't be practical that we ignored them.",
+                'status': "Error"
             }
     if(len(actual_gesture_ids) == 1):
         id = actual_gesture_ids[0] - 1
@@ -879,8 +890,8 @@ def analyze_conflict(sequence : list):
         
         conflicts_data = np.load("./data/all_conflicts.npy")
         output_map = {}
-        output_map['message'] = 'OKAY'
-        output_map['status'] = 'OKAY'
+        output_map['message'] = 'Ok'
+        output_map['status'] = 'Ok'
         output_map['confidence'] = np.ndarray.tolist(np.load('./data/confidence_list_final_2.npy').flatten())
         output_map['regular'] = np.ndarray.tolist(conflicts_data[:, id].flatten())
 
@@ -902,8 +913,8 @@ def analyze_conflict(sequence : list):
         count_list_actual = np.load('./data/count_list_actual.npy')
 
     output_map = {}
-    output_map['message'] = 'OKAY'
-    output_map['status'] = 'OKAY'
+    output_map['message'] = 'Ok'
+    output_map['status'] = 'Ok'
     output_map['confidence'] = confidence_list
     output_map['regular'] = count_list_reg
     if type(count_list_actual) is list: 
@@ -924,8 +935,8 @@ def analyze_conflict(sequence : list):
 
 
     return {
-            'message': "OKAY",
-            'status': "OKAY",
+            'message': "Ok",
+            'status': "Ok",
             'conflictAnalysis': conflict_analysis_result,
             'avgConflictAnalysis': avg_conflict_analysis_result
             }
@@ -1100,6 +1111,8 @@ def get_confusion_chart_data(i_label: str, j_label: str):
             pitch = data_combined[int(right_pred[i]),:,4]
             yaw = data_combined[int(right_pred[i]),:,5]
         return {
+            'status': 'Ok',
+            'message': 'Ok',
             "actual": get_formated_data(x, y, z, roll, pitch, yaw),
             "predicted": get_formated_data(x, y, z, roll, pitch, yaw)
         }
@@ -1138,6 +1151,8 @@ def get_confusion_chart_data(i_label: str, j_label: str):
             pitch2 = data_combined[int(wrong_pred[j]),:,4]
             yaw2 = data_combined[int(wrong_pred[j]),:,5]
         return {
+            'status': 'Ok',
+            'message': 'Ok',
             "actual": get_formated_data(x1, y1, z1, roll1, pitch1, yaw1),
             "predicted": get_formated_data(x2, y2, z2, roll2, pitch2, yaw2)
         }

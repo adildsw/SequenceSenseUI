@@ -8,7 +8,7 @@ from preprocess_data import clean_up_preprocess_data
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-IP = '192.168.0.102'
+IP = '127.0.0.1'
 PORT = 3001
 
 @app.route('/')

@@ -68,18 +68,22 @@ const SequenceDesigner = (props) => {
             if (i === 0) srcImg = firstShape;
             else if (i === 7) srcImg = lastShape;
 
-            var marginLeft = '0px';
-            if (i === 0) marginLeft = '-' + sequenceDesignerDim[0] / 17 + 'px';
-            else if (i === 6) marginLeft = '-' + sequenceDesignerDim[0] / 34 + 'px';
+            var marginRight = '0px';
+            if (i === 0) marginRight = '-' + sequenceDesignerDim[0] / 16 + 'px';
+            else if (i === 6) marginRight = '-' + sequenceDesignerDim[0] / 34 + 'px';
             else {
-                marginLeft = '-' + sequenceDesignerDim[0] / 32 + 'px';
+                marginRight = '-' + sequenceDesignerDim[0] / 32 + 'px';
             }
+
+            var marginLeft = '0px';
+            if (i === 0) marginLeft = sequenceDesignerDim[0] / 150 + 'px';
 
             var imgStyle = {
                 position: 'relative',
                 filter: 'invert(10%)', 
                 width: sequenceDesignerDim[0] / 6.3 + 'px',
-                marginRight: marginLeft,
+                marginRight: marginRight,
+                marginLeft: marginLeft
             }
             var textStyle = {
                 position: 'absolute',
