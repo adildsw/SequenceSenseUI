@@ -1,4 +1,4 @@
-import { SettingOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { DeleteOutlined, LeftOutlined, RightOutlined, SettingOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import { Button, Card, Image, message, Typography, Popover } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { useDrop } from "react-dnd";
@@ -27,7 +27,7 @@ const SequenceDesigner = (props) => {
         setIsFetchingConflictAnalysis 
     } = props;
 
-    const [popoverVisible, setPopoverVisible] = useState(false);
+    const [actionPopoverProps, setActionPopoverProps] = useState({'visible': false, 'idx': '-1', 'action': '', 'x': 0, 'y': 0});
     const [sequenceDesignerDim, setSequenceDesignerDim] = useState([0, 0]);
 
     const sequenceDesignerAreaRef = useCallback(node => {
@@ -47,16 +47,16 @@ const SequenceDesigner = (props) => {
     }, [setSequenceDesignerResizeFunc]);
 
     useEffect(() => {
-        window.addEventListener('click', (e) => {
+        window.onclick = (e) => {
             if (!String(e.target.className).includes('ant-popover')) {
-                setPopoverVisible(prevState => {
+                setActionPopoverProps(prevState => {
                     if (prevState.visible === true)
                         return {...prevState, 'visible': false};
                     else
                         return prevState;
                 });
             }
-        });
+        }
     }, []);
 
     const [{ canDrop, isOver }, drop] = useDrop(() => ({
@@ -105,21 +105,39 @@ const SequenceDesigner = (props) => {
             }
 
             gestureSequenceFlow.push(
-                <Image className={'sequence-atomic-action gesture-' + i} src={srcImg} preview={false} style={{...imgStyle, imageRendering: '-webkit-optimize-contrast'}} onClick={(e) => { handleSequenceActionClick(e); }} />
+                <Image 
+                    key={i}
+                    className={'sequence-atomic-action gesture-' + i} 
+                    src={srcImg} 
+                    preview={false} 
+                    style={{...imgStyle, imageRendering: '-webkit-optimize-contrast'}} 
+                    onClick={() => {
+                        message.destroy();
+                        message.warning('Right click on atomic action for more options.');
+                    }} 
+                    onContextMenu={(e) => { handleSequenceActionClick(e); }} 
+                />
             )
         }
         return gestureSequenceFlow;
     }
 
     const handleSequenceActionClick = (event) => {
+        event.preventDefault();
         var actionIdx = -1;
         for (var c of event.target.className.split(' ')) {
             if (c.startsWith('gesture-')) {
                 actionIdx = parseInt(c.split('-')[1]);
             }
         }
-        console.log(actionIdx);
-        // setPopoverVisible(true);
+        setActionPopoverProps({
+            ...actionPopoverProps, 
+            visible: true, 
+            idx: actionIdx, 
+            x: event.clientX, 
+            y: event.clientY,
+            action: gestureSequence[actionIdx]
+        });
     }
 
     const dropSpaceParams = {
@@ -223,6 +241,30 @@ const SequenceDesigner = (props) => {
                 });
             });
     }
+
+    const moveAtomicActionLeft = () => {
+        if (actionPopoverProps.idx === 0) return;
+        var newGestureSequence = [...gestureSequence];
+        var temp = newGestureSequence[actionPopoverProps.idx];
+        newGestureSequence[actionPopoverProps.idx] = newGestureSequence[actionPopoverProps.idx - 1];
+        newGestureSequence[actionPopoverProps.idx - 1] = temp;
+        setGestureSequence(newGestureSequence);
+    }
+
+    const moveAtomicActionRight = () => {
+        if (actionPopoverProps.idx === gestureSequence.length - 1) return;
+        var newGestureSequence = [...gestureSequence];
+        var temp = newGestureSequence[actionPopoverProps.idx];
+        newGestureSequence[actionPopoverProps.idx] = newGestureSequence[actionPopoverProps.idx + 1];
+        newGestureSequence[actionPopoverProps.idx + 1] = temp;
+        setGestureSequence(newGestureSequence);
+    }
+
+    const deleteAtomicAction = () => {
+        var newGestureSequence = [...gestureSequence];
+        newGestureSequence.splice(actionPopoverProps.idx, 1);
+        setGestureSequence(newGestureSequence);
+    }
     
     return (
         <>
@@ -245,15 +287,6 @@ const SequenceDesigner = (props) => {
             </Card>
             <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <Button disabled={gestureSequence.length === 0} type='danger' style={{ marginRight: '12px' }} onClick={() => { setGestureSequence([]); }}>Clear All</Button>
-                {/* <Tooltip title='Move Atomic Action Left'>
-                    <Button disabled style={{ borderRight: '0px' }}><LeftOutlined /></Button>
-                </Tooltip>
-                <Tooltip title='Delete Atomic Action'>
-                    <Button disabled type='default' danger style={{ borderRadius: '0px' }} ><DeleteOutlined /></Button>
-                </Tooltip>
-                <Tooltip title='Move Atomic Action Right'>
-                    <Button disabled style={{ borderLeft: '0px', marginRight: '12px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}><RightOutlined /></Button>
-                </Tooltip> */}
                 <Button disabled={gestureSequence.length === 0} style={{ flexGrow: '1', marginRight: '12px' }} onClick={() => { analyzeConflict(); }}><SettingOutlined />Calculate Conflict</Button>
                 <Button 
                     disabled={gestureSequence.length === 0} 
@@ -262,11 +295,24 @@ const SequenceDesigner = (props) => {
                         setIsSequencePreviewing(true);
                     }}>
                     <VideoCameraOutlined />{'Preview Sequence'}</Button>
+            </div>
+            <div style={{ position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, zIndex: -1 }}>
                 <Popover
-                    content={<Button onClick={() => { setPopoverVisible(false); }}>Close</Button>}
-                    title="Title"
-                    visible={popoverVisible}
-                    onVisibleChange={(value) => { setPopoverVisible(value); }}
+                    overlayInnerStyle={{ position: 'relative', 'top': actionPopoverProps.y + 'px', 'left': actionPopoverProps.x + 'px', background: '#ffffffdd' }}
+                    title={
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <Text strong>Atomic Action:&nbsp;</Text>
+                            <Text style={{ fontWeight: 'normal' }}>{actionPopoverProps.action} ({actionPopoverProps.idx + 1}) </Text>
+                        </div>
+                    }
+                    content={
+                        <div direction='horizontal' size={0} style={{ display: 'flex', flexDirection: 'row' }}>
+                            <Button disabled={actionPopoverProps.idx === 0} style={{ flexGrow: '1', borderRight: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px'  }} onClick={() => { moveAtomicActionLeft(); }}><LeftOutlined /></Button>
+                            <Button type='default' danger style={{ flexGrow: '1', borderRadius: '0px' }} onClick={() => { deleteAtomicAction(); }}><DeleteOutlined /></Button>
+                            <Button disabled={actionPopoverProps.idx === gestureSequence.length - 1} style={{ flexGrow: '1', borderLeft: '0px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }} onClick={() => { moveAtomicActionRight(); }}><RightOutlined /></Button>
+                        </div>
+                    }
+                    visible={actionPopoverProps.visible}
                 />
             </div>
         </>

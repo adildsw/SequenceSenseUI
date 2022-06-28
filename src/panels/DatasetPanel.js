@@ -23,7 +23,7 @@ const DatasetPanel = (props) => {
     const [randomGestureFileExample, setRandomGestureFileExample] = useState(generateRandomFileExample());
 
     useEffect(() => {
-        window.addEventListener('click', (e) => {
+        window.onclick = (e) => {
             if (!String(e.target.className).includes('ant-popover')) {
                 setGestureDeleteProps(prevState => {
                     if (prevState.visible === true)
@@ -32,7 +32,7 @@ const DatasetPanel = (props) => {
                         return prevState;
                 });
             }
-        });
+        };
     }, []);
 
     const uploadOptions = [
@@ -286,18 +286,18 @@ const DatasetPanel = (props) => {
                                     }
                                     setGestureDeleteProps({
                                         ...gestureDeleteProps, 
-                                        'visible': true, 
-                                        'type': deleteType, 
-                                        'toDelete': e.node.key, 
-                                        'x': e.event.clientX, 
-                                        'y': e.event.clientY
+                                        visible: true, 
+                                        type: deleteType, 
+                                        toDelete: e.node.key, 
+                                        x: e.event.clientX, 
+                                        y: e.event.clientY
                                     });
                                     
                                 }}
                                 onClick={() => {
                                     if (isFetchingClassificationResult) return;
                                     message.destroy();
-                                    message.warning('Press right click to remove the gesture sample.');
+                                    message.warning('Right click on the gesture sample to remove it.');
                                 }}
                             />
                         </Space>

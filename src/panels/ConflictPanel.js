@@ -32,7 +32,7 @@ const ConflictPanel = (props) => {
         isComponentVisualizationVisible, 
         setIsComponentVisualizationVisible, 
         confidenceValue, 
-        setConfidenceValue, 
+        setConfidenceValue,
         serverAddress
     } = props;
 
@@ -371,7 +371,21 @@ const ConflictPanel = (props) => {
                         </Card>
                     </Col>
                     <Col span={14} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingRight: '6px', paddingLeft: '6px' }}>
-                        <SequenceDesigner setSequencePreviewIdx={setSequencePreviewIdx} selectedGesture={selectedGesture} setSpecificGestureVisualization={setSpecificGestureVisualization} classifierData={classifierData} setClassifierData={setClassifierData} setIsSequencePreviewing={setIsSequencePreviewing} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
+                        <SequenceDesigner 
+                            setSequencePreviewIdx={setSequencePreviewIdx} 
+                            selectedGesture={selectedGesture} 
+                            setSpecificGestureVisualization={setSpecificGestureVisualization} 
+                            classifierData={classifierData} 
+                            setClassifierData={setClassifierData} 
+                            setIsSequencePreviewing={setIsSequencePreviewing} 
+                            serverAddress={serverAddress} 
+                            setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} 
+                            setConflictData={setConflictData} 
+                            gestureSequence={gestureSequence} 
+                            setGestureSequence={setGestureSequence} 
+                            setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} 
+                            screenConfig={screenConfig} 
+                        />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
                         <Card size='small' style={{ borderBottom: '0' }} bodyStyle={{ padding: '8px' }}>
