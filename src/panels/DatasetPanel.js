@@ -11,7 +11,7 @@ const { Title, Text } = Typography;
 
 const DatasetPanel = (props) => {
 
-    const { gestureData, setGestureData, setClassifierData, setSelectedClassification, setGeneratedData, isFetchingClassificationResult, setIsFetchingClassificationResult, serverAddress } = props;
+    const { gestureData, setGestureData, setClassifierData, setSelectedClassification, setGeneratedData, setSelectedGesture, isFetchingClassificationResult, setIsFetchingClassificationResult, serverAddress } = props;
 
     const [uploadType, setUploadType] = useState('single');
     const [uploadGesture, setUploadGesture] = useState('');
@@ -144,6 +144,7 @@ const DatasetPanel = (props) => {
                     else
                         message.error('Classification Accuracy: ' + (data.accuracy * 100).toFixed(2) + '%');
                     setIsFetchingClassificationResult(false);
+                    setSelectedGesture(gestureData.labels[0]);
                 }
             }, error => {
                 console.log(error);

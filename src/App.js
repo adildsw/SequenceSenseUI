@@ -26,15 +26,14 @@ const App = () => {
     const [menuSelection, setMenuSelection] = useState('dataset');
     const [gestureData, setGestureData] = useState({processed: false, labels: [], files: {}, data: {}});
     const [classifierData, setClassifierData] = useState({});
-    const [conflictData, setConflictData] = useState({ gestureSequence: [], chartData: {} })
     const [selectedClassification, setSelectedClassification] = useState({ actualIdx: -1, predictedIdx: -1, actual: {}, predicted: {} });
     const [isVisualizationChartIsolated, setIsVisualizationChartIsolated] = useState(true);
     const [selectedGesture, setSelectedGesture] = useState('');
     const [generatedData, setGeneratedData] = useState({});
+    const [, setConflictData] = useState({ gestureSequence: [], chartData: {}});
     const [gestureSequence, setGestureSequence] = useState([]);
     const [isComponentVisualizationVisible, setIsComponentVisualizationVisible] = useState(false);
     const [confidenceValue, setConfidenceValue] = useState(0.8);
-    const [isSequencePreviewing, setIsSequencePreviewing] = useState(false);
 
     // Loading Variables
     const [isFetchingClassificationResult, setIsFetchingClassificationResult] = useState(false);
@@ -42,14 +41,14 @@ const App = () => {
     const [isFetchingConflictAnalysis, setIsFetchingConflictAnalysis] = useState(false);
 
     // Resize Functions
-    const [confusionMatrixPanelResizeFunc, setConfusionMatrixPanelResizeFunc] = useState(null);
-    const [confusionMatrixChartResizeFunc, setConfusionMatrixChartResizeFunc] = useState(null);
-    const [isolatedChartResizeFunc, setIsolatedChartResizeFunc] = useState(null);
-    const [mergedChartResizeFunc, setMergedChartResizeFunc] = useState(null);
-    const [componentChartResizeFunc, setComponentChartResizeFunc] = useState(null);
-    const [conflictChartResizeFunc, setConflictChartResizeFunc] = useState(null);
-    const [sequenceDesignerResizeFunc, setSequenceDesignerResizeFunc] = useState(null);
-    const [previewResizeFunc, setPreviewResizeFunc] = useState(null);
+    const [, setConfusionMatrixPanelResizeFunc] = useState(null);
+    const [, setConfusionMatrixChartResizeFunc] = useState(null);
+    const [, setIsolatedChartResizeFunc] = useState(null);
+    const [, setMergedChartResizeFunc] = useState(null);
+    const [, setComponentChartResizeFunc] = useState(null);
+    const [, setConflictChartResizeFunc] = useState(null);
+    const [, setSequenceDesignerResizeFunc] = useState(null);
+    const [, setPreviewResizeFunc] = useState(null);
 
     const { useBreakpoint } = Grid;
 
@@ -110,6 +109,7 @@ const App = () => {
                                             setClassifierData={setClassifierData} 
                                             setSelectedClassification={setSelectedClassification}
                                             setGeneratedData={setGeneratedData}
+                                            setSelectedGesture={setSelectedGesture}
                                             serverAddress={SERVER_ADDRESS} 
                                             isFetchingClassificationResult={isFetchingClassificationResult} 
                                             setIsFetchingClassificationResult={setIsFetchingClassificationResult}
@@ -163,21 +163,18 @@ const App = () => {
                                             selectedGesture={selectedGesture}
                                             setSelectedGesture={setSelectedGesture} 
                                             gestureSequence={gestureSequence}
+                                            setConflictData={setConflictData}
                                             setGestureSequence={setGestureSequence}
                                             setConflictChartResizeFunc={setConflictChartResizeFunc}
                                             setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc}
                                             setPreviewResizeFunc={setPreviewResizeFunc}
                                             isFetchingConflictAnalysis={isFetchingConflictAnalysis}
                                             setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis}
-                                            conflictData={conflictData}
-                                            setConflictData={setConflictData}
                                             screenConfig={screenConfig}
                                             isComponentVisualizationVisible={isComponentVisualizationVisible}
                                             setIsComponentVisualizationVisible={setIsComponentVisualizationVisible}
                                             confidenceValue={confidenceValue}
                                             setConfidenceValue={setConfidenceValue}
-                                            isSequencePreviewing={isSequencePreviewing} 
-                                            setIsSequencePreviewing={setIsSequencePreviewing}
                                             serverAddress={SERVER_ADDRESS}
                                         />
                                     </Col>

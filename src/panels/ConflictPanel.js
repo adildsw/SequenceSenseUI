@@ -1,5 +1,5 @@
 import { DownloadOutlined, InfoCircleOutlined, LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Image, Row, Select, Space, Typography, Slider, List, Divider, Switch } from 'antd';
+import { Button, Card, Col, Row, Select, Space, Typography, Slider, List, Divider, Switch } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { CartesianGrid, Label, Line, LineChart, XAxis, YAxis, Legend, ReferenceLine, Tooltip } from 'recharts';
 import randomColor from 'randomcolor';
@@ -8,7 +8,6 @@ import ReactPlayer from 'react-player';
 
 import AtomicAction from '../components/AtomicAction';
 import SequenceDesigner from '../components/SequenceDesigner';
-import { getAnim } from '../utils/AnimUtils';
 import { getAntdSelectItem } from '../utils/AntdUtils';
 
 const { Title, Text } = Typography;
@@ -23,7 +22,6 @@ const ConflictPanel = (props) => {
         setSelectedGesture, 
         gestureSequence, 
         setGestureSequence, 
-        conflictData, 
         setConflictData, 
         isFetchingConflictAnalysis, 
         setIsFetchingConflictAnalysis, 
@@ -35,8 +33,6 @@ const ConflictPanel = (props) => {
         setIsComponentVisualizationVisible, 
         confidenceValue, 
         setConfidenceValue, 
-        isSequencePreviewing, 
-        setIsSequencePreviewing,
         serverAddress
     } = props;
 
@@ -45,6 +41,8 @@ const ConflictPanel = (props) => {
     const [specificGestureVisualization, setSpecificGestureVisualization] = useState({});
     const [specificGestureVisualizationColors, setSpecificGestureVisualizationColors] = useState({});
     const [sequencePreviewIdx, setSequencePreviewIdx] = useState(0);
+    const [isSequencePreviewing, setIsSequencePreviewing] = useState(false);
+    const [isAnimDirAlt, setIsAnimDirAlt] = useState(false);
 
     const [conflictChartDim, setConflictChartDim] = useState([0, 0]);
     const [previewDim, setPreviewDim] = useState([0, 0]);
@@ -278,39 +276,61 @@ const ConflictPanel = (props) => {
 
     const getNowPlayingString = () => {
         if (isSequencePreviewing) {
-            // var str = <Text></Text>
-            // for (var i of gestureSequence) {
-
-            // }
-            return 'Sequencing Previewing';
+            var stringArray = [<Text strong>Sequence Preview: </Text>];
+            for (var idx = 0; idx < gestureSequence.length; idx++) {
+                var delimeter = idx === gestureSequence.length - 1 ? '' : '-';
+                if (sequencePreviewIdx === idx) {
+                    stringArray.push(<span key={idx}><Text strong style={{ color: '#FF4136' }}>{gestureSequence[idx]}</Text>{delimeter}</span>);
+                }
+                else {
+                    stringArray.push(<span key={idx}><Text>{gestureSequence[idx] + delimeter}</Text></span>);
+                }
+            }
+            return stringArray;
         }
         else if (selectedAtomicAction !== null) {
-            return <Text strong>{selectedAtomicAction}</Text>
+            return <Text strong>Sequence Preview: {selectedAtomicAction}</Text>;
         }
-        return '';
+        return <Text strong>Sequence Preview</Text>;
+    }
+
+    const getNowPlayingFileUrl = () => {
+        if (isSequencePreviewing) {
+            var filename = gestureSequence[sequencePreviewIdx];
+
+            // Incorporating foot lifting for tap gestures
+            if (filename === 'a0') {
+                if (gestureSequence.length > sequencePreviewIdx + 1) {
+                    var nextAction = gestureSequence[sequencePreviewIdx + 1];
+                    if (['a11', 'a12', 'a13'].includes(nextAction)) {
+                        filename = 'a0_for_tap';
+                    }
+                }
+            }
+
+            if (isAnimDirAlt) {
+                return 'animations/alt/' + filename + '.mp4';
+            }
+            else {
+                return 'animations/' + filename + '.mp4';
+            }   
+        }
+        else {
+            return 'animations/' + selectedAtomicAction + '.mp4';
+        }
     }
 
     const updateSequencePreview = () => {
-        console.log(sequencePreviewIdx);
-        if (gestureSequence.length < sequencePreviewIdx - 1) {
-            setSequencePreviewIdx(prevState => {
-                return prevState + 1;
+        if (sequencePreviewIdx < gestureSequence.length - 1) {
+            setSequencePreviewIdx(() => {
+                var newIdx = sequencePreviewIdx + 1;
+                if (gestureSequence[newIdx] === gestureSequence[newIdx - 1]) {
+                    setIsAnimDirAlt(!isAnimDirAlt);
+                }
+                return newIdx;
             });
-        }
-        else {
-            setIsSequencePreviewing(false);
-        }
-    }
 
-    const getSequencePreviewPathArray = () => {
-        var pathArray = [];
-        for (var i = 0; i < gestureSequence.length; i++) {
-            pathArray.push(
-                'animations/' + gestureSequence[i] + '.mp4'
-            );
         }
-        console.log(pathArray);
-        return pathArray;
     }
 
     return (
@@ -334,7 +354,8 @@ const ConflictPanel = (props) => {
                             bordered={true}
                             defaultValue={gestureSelectOptions[0].value}
                             value={selectedGesture}
-                            onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); console.log(classifierData.atomicSeq); }}
+                            onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); }}
+                            onSelect={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); }}
                         />
                     </Space>
                     <Button onClick={() => { initiateExport(); }}><DownloadOutlined />Export Recognizer</Button>
@@ -353,28 +374,25 @@ const ConflictPanel = (props) => {
                         <SequenceDesigner setSequencePreviewIdx={setSequencePreviewIdx} selectedGesture={selectedGesture} setSpecificGestureVisualization={setSpecificGestureVisualization} classifierData={classifierData} setClassifierData={setClassifierData} setIsSequencePreviewing={setIsSequencePreviewing} serverAddress={serverAddress} setIsFetchingConflictAnalysis={setIsFetchingConflictAnalysis} setConflictData={setConflictData} gestureSequence={gestureSequence} setGestureSequence={setGestureSequence} setSequenceDesignerResizeFunc={setSequenceDesignerResizeFunc} screenConfig={screenConfig} />
                     </Col>
                     <Col span={6} style={{ display: 'flex', flexDirection: 'column', height: '35vh', paddingLeft: '6px' }}>
-                        <Card title={'Sequence Preview'} size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%', borderBottom: '0' }} bodyStyle={{ display: 'flex', flexGrow: '1', flexDirection:'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <Card size='small' style={{ borderBottom: '0' }} bodyStyle={{ padding: '8px' }}>
+                            {getNowPlayingString()}
+                        </Card>
+                        <Card size='small' style={{ flexGrow: '1', display: 'flex', flexDirection: 'column', height: '100%' }} bodyStyle={{ display: 'flex', flexGrow: '1', flexDirection:'column', justifyContent: 'center', alignItems: 'center' }}>
                             <div ref={previewAreaRef} style={{ display: 'flex', flexGrow: '1', justifyContent: 'center', alignItems: 'center' }}>
                                 { 
-                                    selectedAtomicAction === null ?
+                                    selectedAtomicAction === null && !isSequencePreviewing ?
                                     <Text type={'secondary'}>
                                         <InfoCircleOutlined /> <b>Tip:</b> Select atomic action or click on <i>Preview Sequence</i> to preview the gesture.
                                     </Text> :
-                                    // <Image src={getAnim(selectedAtomicAction)} preview={false} style={{ height: previewDim[1] * 0.9 + 'px' }} />
-                                    // <ReactPlayer url={'https://www.youtube.com/watch?v=ysz5S6PUM-U'} controls width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
                                     <>
                                         {
                                             isSequencePreviewing ?
-                                            <ReactPlayer url={getSequencePreviewPathArray} controls={false} playing loop={false} onEnded={() => { updateSequencePreview(); }} width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} /> :
+                                            <ReactPlayer url={getNowPlayingFileUrl()} controls={false} playing loop={false} onEnded={() => { updateSequencePreview(); }} width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} /> :
                                             <ReactPlayer url={'animations/' + selectedAtomicAction + '.mp4'} controls={false} playing loop width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
                                         }
                                     </>
-                                    // <ReactPlayer url={'animations/' + selectedAtomicAction + '.mp4'} controls={false} playing loop={!isSequencePreviewing} onEnded={() => { updateSequencePreview(); }} width={previewDim[0] * 0.9 + 'px'} height={previewDim[1] * 0.9 + 'px'} />
                                 }
                             </div>
-                        </Card>
-                        <Card size='small' style={{ borderTop: getNowPlayingString() === '' ? '0' : '1px solid #eee', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            {getNowPlayingString()}
                         </Card>
                     </Col>
                 </Row>
