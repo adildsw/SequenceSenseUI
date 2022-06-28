@@ -44,5 +44,5 @@ Once the backend server is running, you can launch the SequenceSense UI by navig
 npm start
 ```
 Once the server is hosted successfully, SequenceSense should load automatically in your default browser.
-<img src='https://github.com/adildsw/SequenceSenseUI/blob/main/src/assets/screen_1.png'>
+<img src='https://github.com/adildsw/SequenceSenseUI/blob/main/src/assets/screen_3.png'>
 
