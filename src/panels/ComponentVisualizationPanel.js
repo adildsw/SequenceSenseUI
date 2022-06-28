@@ -97,16 +97,16 @@ const ComponentVisualizationPanel = (props) => {
 
         var yAxisLabel = componentType.charAt(0).toUpperCase() + componentType.slice(1);
         if (chartType === 'distance') {
-            yAxisLabel += '-Distance (m)';
+            yAxisLabel += ' (m)';
         }
         else if (chartType === 'orientation') {
-            yAxisLabel += '-Angle (deg)';
+            yAxisLabel += ' (deg)';
         }
         
         return (
             <LineChart width={width} height={height} data={data} margin={{ top: 5, bottom: 5, right: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey='sample' minTickGap={minTickGap} tick={false}>
+                <XAxis dataKey='sample' minTickGap={minTickGap} tick={true} ticks={[0, 399]} >
                     <Label value='Sample' />
                 </XAxis>
                 <YAxis minTickGap={minTickGap} tick={true} ticks={domain} type='number' domain={domain}>
@@ -169,13 +169,13 @@ const ComponentVisualizationPanel = (props) => {
 
         var xAxisDataKey = 'y';
         var yAxisDataKey = 'x';
-        var xAxisLabel = 'Y-Distance (m)';
-        var yAxisLabel = 'X-Distance (m)';
+        var xAxisLabel = 'Y (m)';
+        var yAxisLabel = 'X (m)';
         if (chartType === 'orientation') {
             xAxisDataKey = 'pitch';
             yAxisDataKey = 'yaw';
-            xAxisLabel = 'Pitch-Angle (deg)';
-            yAxisLabel = 'Yaw-Angle (deg)';
+            xAxisLabel = 'Pitch (deg)';
+            yAxisLabel = 'Yaw (deg)';
         }
         var domain = [-0.5, 0.5];
         if (chartType === 'orientation') {

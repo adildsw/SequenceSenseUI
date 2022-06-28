@@ -1292,7 +1292,7 @@ def generate_report(confidence: float):
 
         # specificc report for each gesture json
         file_name = "Conflict_Analysis_JSON_"+ key
-        get_json_data_for_report(confidence_list, gesture_list, regular_list, file_name, directory, confidence = confidence)
+        get_json_data_for_report(confidence_list, gesture_list, regular_list, key, directory, confidence = confidence)
 
     shutil.make_archive(folder_name, 'zip', './'+folder_name)
     shutil.rmtree('./'+folder_name)

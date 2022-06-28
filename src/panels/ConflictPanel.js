@@ -182,7 +182,7 @@ const ConflictPanel = (props) => {
                     payload={[
                         { color:'#3D9970', value: 'Gestures', type: 'plainline', payload: { strokeDasharray: '0 0' }, id: 'avgRegular' }, 
                         { color:'#0074D9', value: 'Regular Activities', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }, 
-                        { color:'#FF4136', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
+                        { color:'#85144b', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
                     ]} 
                 />,
                 <Line key={'specificGestureAvg'} isAnimationActive={false} type='monotone' dataKey={'specificGestureAvg'} name={'Gestures'} stroke={'#3D9970'} dot={false} />,
@@ -195,18 +195,20 @@ const ConflictPanel = (props) => {
                     key={'average'}
                     verticalAlign='top' 
                     payload={[
-                        { color:'#000', value: 'Gestures', type: 'plainline', payload: { strokeDasharray: '0 0' }, id: 'avgRegular' }, 
+                        { color:'#3D9970', value: 'Gestures', type: 'plainline', payload: { strokeDasharray: '0 0' }, id: 'avgRegular' }, 
                         { color:'#000', value: 'Regular Activities', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }, 
-                        { color:'#FF4136', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
+                        { color:'#85144b', value: 'Confidence Threshold', type: 'plainline', payload: { strokeDasharray: '3 3' }, id: 'avgRegular' }
                     ]} 
                 />
             );
+            lines.push(
+                <Line key={'GestureAcc'} isAnimationActive={false} type='monotone' dataKey={'avgGesture'} stroke={'#3D9970'} name={'Gesture Accuracy'} dot={false} />
+            );
             for (var gesture of Object.keys(specificGestureVisualization)) {
                 if (specificGestureVisualization[gesture]) {
-                    console.log(gesture);
+                    var gestureName = gesture === 'custom_seq' ? 'Custom Sequence [' + classifierData.gestureSequence.join('-') + ']' : gesture;
                     lines.push(
-                        <Line key={gesture + 'Gesture'} isAnimationActive={false} type='monotone' dataKey={gesture + 'Gesture'} stroke={specificGestureVisualizationColors[gesture]} name={gesture + ' (Gesture)'} dot={false} />,
-                        <Line key={gesture + 'Regular'} isAnimationActive={false} type='monotone' dataKey={gesture + 'Regular'} stroke={specificGestureVisualizationColors[gesture]} name={gesture + ' (Regular Activities)'} strokeDasharray={3} dot={false} />
+                        <Line key={gesture + 'Regular'} isAnimationActive={false} type='monotone' dataKey={gesture + 'Regular'} stroke={specificGestureVisualizationColors[gesture]} name={gestureName + ' (Regular Activities)'} strokeDasharray={3} dot={false} />
                     );
                 }
             }
@@ -233,7 +235,7 @@ const ConflictPanel = (props) => {
                 </YAxis>
                 <Tooltip formatter={(value) => Math.round(value * 10000) / 10000} labelFormatter={(value) => 'Confidence: ' + Math.round(value * 10000) / 10000}/>
                 {lines}
-                <ReferenceLine x={confidenceValue} stroke={'#FF4136'} strokeWidth={2} strokeDasharray={3} />
+                <ReferenceLine x={confidenceValue} stroke={'#85144b'} strokeWidth={2} strokeDasharray={5} />
             </LineChart>
         );
     }
@@ -354,8 +356,8 @@ const ConflictPanel = (props) => {
                             bordered={true}
                             defaultValue={gestureSelectOptions[0].value}
                             value={selectedGesture}
-                            onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); }}
-                            onSelect={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); }}
+                            onChange={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); setSequencePreviewIdx(0); }}
+                            onSelect={(value) => { setSelectedGesture(value); setGestureSequence(classifierData.atomicSeq[value]); setSequencePreviewIdx(0); }}
                         />
                     </Space>
                     <Button onClick={() => { initiateExport(); }}><DownloadOutlined />Export Recognizer</Button>

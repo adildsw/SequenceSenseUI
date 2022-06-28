@@ -1,6 +1,6 @@
 <img src='https://github.com/adildsw/SequenceSense/blob/main/src/assets/sequence-sense-banner.svg'>
 
-__SequenceSense__ is a gesture sequencing tool. Gesture designers can use SequenceSense to construct robust gestures using atomic actions as gesture building blocks and compare it against regular activity corpus. Once a gesture is constructed, SequenceSense helps designers reduce the overall false activation of their gesure set by visualizing the performance of each gesture independently.
+__SequenceSense__ is a gesture sequencing tool. Gesture designers can use SequenceSense to construct robust gestures by sequencing atomic actions as gesture building blocks and comparing it against a regular activity corpus. Once a gesture is constructed, SequenceSense helps designers reduce the overall false activation of their gesure set by visualizing the performance of each gesture independently.
 
 ## Getting Started
 The following set of instructions will help you get SequenceSense up and running on your computer.
