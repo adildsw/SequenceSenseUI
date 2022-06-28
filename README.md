@@ -35,6 +35,7 @@ pip install -r requirements.txt
 #### 5. Starting Backend Server
 Once all the dependencies are installed, you need to start the backend server using the following command in the terminal:
 ```
+cd backend
 python server.py
 ```
 #### 6. Launching SequenceSense
