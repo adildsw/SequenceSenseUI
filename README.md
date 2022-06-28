@@ -1,4 +1,6 @@
-<img src='https://github.com/adildsw/SequenceSense/blob/main/src/assets/sequence-sense-banner.svg'>
+<p align='center'>
+<img width='60%' src='https://github.com/adildsw/SequenceSenseUI/blob/main/src/assets/sequence-sense-banner.svg'>
+</p>
 
 __SequenceSense__ is a gesture sequencing tool. Gesture designers can use SequenceSense to construct robust gestures by sequencing atomic actions as gesture building blocks and comparing it against a regular activity corpus. Once a gesture is constructed, SequenceSense helps designers reduce the overall false activation of their gesure set by visualizing the performance of each gesture independently.
 
@@ -33,6 +35,7 @@ pip install -r requirements.txt
 #### 5. Starting Backend Server
 Once all the dependencies are installed, you need to start the backend server using the following command in the terminal:
 ```
+cd backend
 python server.py
 ```
 #### 6. Launching SequenceSense
@@ -41,7 +44,5 @@ Once the backend server is running, you can launch the SequenceSense UI by navig
 npm start
 ```
 Once the server is hosted successfully, SequenceSense should load automatically in your default browser.
-<img src='https://github.com/adildsw/enfrappe/blob/main/src/assets/screen_1.png'>
-<img src='https://github.com/adildsw/enfrappe/blob/main/src/assets/screen_2.png'>
-<img src='https://github.com/adildsw/enfrappe/blob/main/src/assets/screen_3.png'>
+<img src='https://github.com/adildsw/SequenceSenseUI/blob/main/src/assets/screen_1.png'>
 
