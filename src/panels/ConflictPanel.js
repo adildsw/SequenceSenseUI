@@ -202,7 +202,7 @@ const ConflictPanel = (props) => {
                 />
             );
             lines.push(
-                <Line key={'GestureAcc'} isAnimationActive={false} type='monotone' dataKey={'avgGesture'} stroke={'#3D9970'} name={'Gesture Accuracy'} dot={false} />
+                <Line key={'GestureAcc'} isAnimationActive={false} type='monotone' dataKey={'avgGesture'} stroke={'#3D9970'} name={'Gestures'} dot={false} />
             );
             for (var gesture of Object.keys(specificGestureVisualization)) {
                 if (specificGestureVisualization[gesture]) {

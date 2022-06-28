@@ -1205,7 +1205,7 @@ def save_plot(title, confidence_list, gesture_list, regular_list, file_name, dir
     plt.savefig(directory+file_name+".png")
 
 
-def get_json_data_for_report(confidence_list, gesture_list, regular_list, file_name, directory, confidence = None):
+def get_json_data_for_report(confidence_list, gesture_list, regular_list, file_name, directory, sequnece = None, confidence = None):
     index = -1
     for i in range(len(confidence_list)):
         if confidence >= confidence_list[i]:
@@ -1216,9 +1216,10 @@ def get_json_data_for_report(confidence_list, gesture_list, regular_list, file_n
 
     output = {}
     if file_name == "Average_Conflict_Analysis_JSON":
-        output["title"] = "Average Conflicts Analysis"
+        output["Title"] = "Average Conflicts Analysis"
     else:
-        output["title"] = "Conflict Analysis"   + " for Gesture: " + file_name
+        output["Gesture name"] =  file_name
+        output["Sequence"] = sequnece
     output["At confidence"] = confidence
     output["Gesture Recognition Accuracy"] = str(gesture_list[index] * 100) + "%"
     output["False Positives from Regular Activites"] = str(regular_list[index] * 100) + "%"
@@ -1292,7 +1293,7 @@ def generate_report(confidence: float):
 
         # specificc report for each gesture json
         file_name = "Conflict_Analysis_JSON_"+ key
-        get_json_data_for_report(confidence_list, gesture_list, regular_list, key, directory, confidence = confidence)
+        get_json_data_for_report(confidence_list, gesture_list, regular_list, key, directory, sequnece, confidence = confidence)
 
     shutil.make_archive(folder_name, 'zip', './'+folder_name)
     shutil.rmtree('./'+folder_name)
