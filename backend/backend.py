@@ -231,6 +231,7 @@ def classify(labels: list, files: dict, data: dict):
 
     '''
     # iterate through each gesture label
+    wrong_files_count = 0
     for label in labels:
         print("label: ", label)
         isExistingGesture = False
