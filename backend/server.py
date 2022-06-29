@@ -17,8 +17,8 @@ def index():
 
 @app.route('/classify', methods=['POST'])
 def classifyAPI():
-    cleanupState()
     # clean_up_preprocess_data()
+    cleanupState()
     resData = json.loads(request.data)
     labels = resData['labels']
     files = resData['files']

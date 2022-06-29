@@ -27,12 +27,12 @@ y_pred_prob_global = None
 
 
 def clean_up_preprocess_data():
-    global newLabelDic, newSeqDic, newSeqDicFeatures, newSeqWrongPred, y_pred_prob_global
+    global newLabelDic, newSeqDic, newSeqDicFeatures, newSeqWrongPred
     newLabelDic ={}
     newSeqDic = {}
     newSeqDicFeatures = {}
     newSeqWrongPred = {}
-    y_pred_prob_global = None
+
 
 reverseSequenceMap = {
         1:"a0 a1",
@@ -283,6 +283,8 @@ def loadFiles(data, drc, gestureName, isKnown = True):
                     check = 1
         #     if stationary[t]:
         #         pos[t,:] = np.zeros((3))
+
+        
         if(len(start_pos) != len(end_pos)):
             if(len(start_pos) > len(end_pos)):
                 end_pos.append(pos.shape[0]-1)
@@ -300,6 +302,20 @@ def loadFiles(data, drc, gestureName, isKnown = True):
             _pos = np.vstack((_pos,pos))
             _start_pos = np.hstack((_start_pos,start_pos))
             _end_pos = np.hstack((_end_pos,end_pos))
+
+
+    # if _start_pos is None:
+    #     print("_start_pos", _start_pos)
+    #     after_kal_rotation  = np.copy(data[:, 0:4])
+    #     if _vel is None:
+    #         velocity = np.zeros((accX.shape[0], 3))
+    #     if _pos is None:
+    #         position = np.zeros((accX.shape[0], 3))
+        
+    #     orientation = np.zeros((accX.shape[0],3))
+    #     feature = np.zeros((400,6))
+    #     dump_data = np.zeros((400,6))
+    #     return ProssedData(keep_data_intact, after_kal_rotation, velocity, position, orientation, dump_data,feature, label=label)
 
     # time_plot =  data[:, 0] - data[0, 0]         
     accX = data[:, 1]
