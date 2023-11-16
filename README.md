@@ -46,3 +46,18 @@ npm start
 Once the server is hosted successfully, SequenceSense should load automatically in your default browser.
 <img src='https://github.com/adildsw/SequenceSenseUI/blob/main/src/assets/screen_3.png'>
 
+## Citation
+```
+@article{AZIM2023103035,
+  title = {SequenceSense: A Tool for Designing Usable Foot-Based Gestures Using a Sequence-Based Gesture Recognizer},
+  journal = {International Journal of Human-Computer Studies},
+  volume = {176},
+  pages = {103035},
+  year = {2023},
+  issn = {1071-5819},
+  doi = {https://doi.org/10.1016/j.ijhcs.2023.103035},
+  url = {https://www.sciencedirect.com/science/article/pii/S1071581923000447},
+  author = {Md Aashikur Rahman Azim and Adil Rahman and Seongkook Heo},
+  keywords = {Foot-based gestures, Gesture recognizer, Usable gestures, Gesture designer},
+}
+```
